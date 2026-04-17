@@ -1,7 +1,25 @@
-from django.http import HttpRequest, JsonResponse
+from django.http import Http404, HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render
 
 from .models import Profile, Relationship
+
+
+def _get_relationship(source_id: str, target_id: str) -> Relationship:
+    """Для пары знак–куспид всегда используем связь «знак → куспид», как в исходных MD знака."""
+    qs = Relationship.objects.select_related("source", "target")
+    rel = qs.filter(source_id=source_id, target_id=target_id).first()
+    if rel:
+        return rel
+    source = get_object_or_404(Profile, pk=source_id)
+    target = get_object_or_404(Profile, pk=target_id)
+    if source.kind != target.kind:
+        sign, cusp = (
+            (source, target) if source.kind == Profile.KIND_SIGN else (target, source)
+        )
+        rel = qs.filter(source=sign, target=cusp).first()
+        if rel:
+            return rel
+    raise Http404("Связь не найдена")
 
 
 def index(request: HttpRequest):
@@ -181,11 +199,7 @@ def result_api(request: HttpRequest) -> JsonResponse:
         target_id = request.GET.get("target_id")
         if not source_id or not target_id:
             return JsonResponse({"error": "source_id and target_id are required"}, status=400)
-        relationship = get_object_or_404(
-            Relationship.objects.select_related("source", "target"),
-            source_id=source_id,
-            target_id=target_id,
-        )
+        relationship = _get_relationship(source_id, target_id)
         content = [
             f"### {relationship.heading}",
             "",
