@@ -1,0 +1,106 @@
+body {
+    margin: 0;
+    background: radial-gradient(circle at top right, #26315d 0%, #111423 40%, #0b0e1a 100%);
+    color: #eaf0ff;
+    min-height: 100vh;
+}
+
+.glass {
+    background: rgba(18, 24, 45, 0.75);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(118, 139, 255, 0.25);
+    border-radius: 18px;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+}
+
+.form-select,
+.form-select:focus {
+    background-color: rgba(14, 19, 38, 0.9);
+    color: #f8faff;
+    border-color: rgba(132, 153, 255, 0.4);
+    box-shadow: none;
+}
+
+.btn-neon {
+    background: linear-gradient(135deg, #5f7cff 0%, #8d5cff 100%);
+    color: #fff;
+    font-weight: 600;
+    border: 0;
+}
+
+.btn-neon:hover {
+    background: linear-gradient(135deg, #6f8aff 0%, #9969ff 100%);
+    color: #fff;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.result-content {
+    color: #dfe7ff;
+    line-height: 1.8;
+}
+
+.result-content p {
+    margin-bottom: 0.85rem;
+}
+
+.result-content ul {
+    padding-left: 1rem;
+}
+
+.result-content li {
+    margin-bottom: 0.5rem;
+}
+
+.result-content strong {
+    color: #ffffff;
+}
+
+.result-content h3,
+.result-content h4 {
+    margin-top: 1.1rem;
+    margin-bottom: 0.8rem;
+    line-height: 1.35;
+}
+
+.result-content.relationship-view h3 {
+    font-size: 1.12rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 12px;
+    background: rgba(88, 111, 255, 0.14);
+    border: 1px solid rgba(128, 150, 255, 0.26);
+}
+
+.result-content.relationship-view h4 {
+    font-size: 1rem;
+    color: #c6d4ff;
+    margin-top: 1.4rem;
+}
+
+.result-content.relationship-view .relation-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 1rem;
+}
+
+.result-content.relationship-view .relation-item {
+    margin-bottom: 0.65rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 12px;
+    background: rgba(19, 28, 57, 0.72);
+    border: 1px solid rgba(126, 148, 255, 0.2);
+}
+
+.result-content.relationship-view .relation-label {
+    font-weight: 700;
+    font-size: 0.93rem;
+    color: #f6f8ff;
+    margin-bottom: 0.28rem;
+}
+
+.result-content.relationship-view .relation-value {
+    color: #d7e3ff;
+    line-height: 1.65;
+}

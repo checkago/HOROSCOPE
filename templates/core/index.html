@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Физика знаков и куспидов — совместимость и характеристики</title>
+    <meta name="description" content="Физико-химическая интерпретация знаков и куспидов: характеристики, совместимость, отношения и расширенный разбор взаимодействий в формате научных аналогий.">
+    <meta name="keywords" content="знаки зодиака, куспиды, совместимость, физика отношений, астрология и физика, характеристики знаков, анализ совместимости">
+    <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1">
+    <meta name="author" content="Horoscope Project">
+    <link rel="canonical" href="/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ru_RU">
+    <meta property="og:title" content="Физика знаков и куспидов — совместимость и характеристики">
+    <meta property="og:description" content="Научно-образная интерпретация отношений и характеристик: физика, химия, математика и удобный интерактивный выбор пар.">
+    <meta property="og:url" content="/">
+    <meta property="og:site_name" content="Физика знаков и куспидов">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Физика знаков и куспидов — совместимость и характеристики">
+    <meta name="twitter:description" content="Интерактивный разбор отношений и характеристик знаков/куспидов через физико-химические модели.">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/core/styles.css">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Физика знаков и куспидов",
+      "inLanguage": "ru",
+      "description": "Интерактивный сайт с физико-химической интерпретацией характеристик и отношений знаков и куспидов.",
+      "url": "/"
+    }
+    </script>
+</head>
+<body>
+    <main class="container py-4 py-md-5">
+        <div class="glass p-4 p-md-5 mb-4">
+            <h1 class="display-6 fw-semibold mb-2">Физика знаков и куспидов</h1>
+            <p class="text-secondary mb-0">Выбери режим, затем профиль(и), и получи красиво оформленную интерпретацию.</p>
+        </div>
+
+        <section class="glass p-4 mb-4">
+            <h2 class="h5 mb-3">Шаг 1. Тип запроса</h2>
+            <label class="form-label" for="mode-select">Что хотите получить?</label>
+            <select id="mode-select" class="form-select form-select-lg">
+                <option value="">Выберите режим</option>
+                <option value="characteristic">Характеристика знака/куспида</option>
+                <option value="relationship">Отношения между знаками/куспидами</option>
+            </select>
+        </section>
+
+        <section class="glass p-4 mb-4 hidden" id="step-2-characteristic">
+            <h2 class="h5 mb-3">Шаг 2. Выбор профиля</h2>
+            <label class="form-label" for="profile-select">Знак или куспид</label>
+            <select id="profile-select" class="form-select form-select-lg">
+                <option value="">Выберите профиль</option>
+            </select>
+            <button id="show-characteristic-btn" type="button" class="btn btn-neon mt-3 w-100">Показать характеристику</button>
+        </section>
+
+        <section class="glass p-4 mb-4 hidden" id="step-2-relationship">
+            <h2 class="h5 mb-3">Шаг 2. Выбор пары</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="source-select">Профиль 1 (источник)</label>
+                    <select id="source-select" class="form-select form-select-lg">
+                        <option value="">Выберите первый профиль</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="target-select">Профиль 2 (цель)</label>
+                    <select id="target-select" class="form-select form-select-lg">
+                        <option value="">Сначала выберите профиль 1</option>
+                    </select>
+                </div>
+            </div>
+            <button id="show-relationship-btn" type="button" class="btn btn-neon mt-3 w-100">Показать отношения</button>
+        </section>
+
+        <section class="glass p-4 hidden" id="result-card">
+            <h2 id="result-title" class="h4 mb-3"></h2>
+            <article id="result-content" class="result-content"></article>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/static/core/app.js"></script>
+</body>
+</html>

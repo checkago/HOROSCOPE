@@ -1,0 +1,1 @@
+Initial project upload: Django app, horoscope markdown corpus, and Docker deployment setup.
