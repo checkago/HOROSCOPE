@@ -5,13 +5,11 @@ from .models import Profile, Relationship
 
 
 def _get_relationship(source_id: str, target_id: str) -> Relationship:
-    """Для пары знак–куспид всегда используем связь «знак → куспид», как в исходных MD знака."""
+    """Для пары знак–куспид всегда связь «знак → куспид» (текст из MD знака), порядок выбора в UI не важен."""
     qs = Relationship.objects.select_related("source", "target")
-    rel = qs.filter(source_id=source_id, target_id=target_id).first()
-    if rel:
-        return rel
     source = get_object_or_404(Profile, pk=source_id)
     target = get_object_or_404(Profile, pk=target_id)
+
     if source.kind != target.kind:
         sign, cusp = (
             (source, target) if source.kind == Profile.KIND_SIGN else (target, source)
@@ -19,6 +17,11 @@ def _get_relationship(source_id: str, target_id: str) -> Relationship:
         rel = qs.filter(source=sign, target=cusp).first()
         if rel:
             return rel
+        raise Http404("Связь не найдена")
+
+    rel = qs.filter(source_id=source_id, target_id=target_id).first()
+    if rel:
+        return rel
     raise Http404("Связь не найдена")
 
 
