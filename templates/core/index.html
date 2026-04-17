@@ -35,13 +35,17 @@
     </script>
 </head>
 <body>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
     <main class="container py-4 py-md-5">
-        <div class="glass p-4 p-md-5 mb-4">
+        <div class="glass hero-card p-4 p-md-5 mb-4">
+            <span class="hero-badge">Интерактивная физико-химическая модель</span>
             <h1 class="display-6 fw-semibold mb-2">Физика знаков и куспидов</h1>
-            <p class="text-secondary mb-0">Выбери режим, затем профиль(и), и получи красиво оформленную интерпретацию.</p>
+            <p class="hero-subtitle mb-0">Выбери режим, профиль или пару и получи глубокий, яркий и научно-образный разбор отношений и характеристик.</p>
         </div>
 
-        <section class="glass p-4 mb-4">
+        <section class="glass step-card p-4 mb-4">
             <h2 class="h5 mb-3">Шаг 1. Тип запроса</h2>
             <label class="form-label" for="mode-select">Что хотите получить?</label>
             <select id="mode-select" class="form-select form-select-lg">
@@ -51,7 +55,7 @@
             </select>
         </section>
 
-        <section class="glass p-4 mb-4 hidden" id="step-2-characteristic">
+        <section class="glass step-card p-4 mb-4 hidden" id="step-2-characteristic">
             <h2 class="h5 mb-3">Шаг 2. Выбор профиля</h2>
             <label class="form-label" for="profile-select">Знак или куспид</label>
             <select id="profile-select" class="form-select form-select-lg">
@@ -60,7 +64,7 @@
             <button id="show-characteristic-btn" type="button" class="btn btn-neon mt-3 w-100">Показать характеристику</button>
         </section>
 
-        <section class="glass p-4 mb-4 hidden" id="step-2-relationship">
+        <section class="glass step-card p-4 mb-4 hidden" id="step-2-relationship">
             <h2 class="h5 mb-3">Шаг 2. Выбор пары</h2>
             <div class="row g-3">
                 <div class="col-md-6">
@@ -79,7 +83,7 @@
             <button id="show-relationship-btn" type="button" class="btn btn-neon mt-3 w-100">Показать отношения</button>
         </section>
 
-        <section class="glass p-4 hidden" id="result-card">
+        <section class="glass result-shell p-4 hidden" id="result-card">
             <h2 id="result-title" class="h4 mb-3"></h2>
             <article id="result-content" class="result-content"></article>
         </section>

@@ -1,35 +1,136 @@
 body {
     margin: 0;
-    background: radial-gradient(circle at top right, #26315d 0%, #111423 40%, #0b0e1a 100%);
+    background:
+        radial-gradient(circle at 10% 10%, rgba(95, 124, 255, 0.26), transparent 45%),
+        radial-gradient(circle at 90% 20%, rgba(141, 92, 255, 0.22), transparent 42%),
+        radial-gradient(circle at 50% 85%, rgba(61, 206, 255, 0.16), transparent 38%),
+        radial-gradient(circle at top right, #26315d 0%, #111423 42%, #090d18 100%);
     color: #eaf0ff;
     min-height: 100vh;
+    font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+    position: relative;
+}
+
+.bg-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(30px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.orb-1 {
+    width: 220px;
+    height: 220px;
+    top: 40px;
+    left: -40px;
+    background: rgba(111, 138, 255, 0.22);
+}
+
+.orb-2 {
+    width: 280px;
+    height: 280px;
+    top: 22%;
+    right: -90px;
+    background: rgba(148, 102, 255, 0.18);
+}
+
+.orb-3 {
+    width: 220px;
+    height: 220px;
+    bottom: 8%;
+    left: 22%;
+    background: rgba(67, 217, 255, 0.12);
+}
+
+main.container {
+    position: relative;
+    z-index: 1;
 }
 
 .glass {
-    background: rgba(18, 24, 45, 0.75);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(118, 139, 255, 0.25);
-    border-radius: 18px;
-    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+    background: linear-gradient(170deg, rgba(25, 33, 63, 0.78), rgba(17, 22, 42, 0.74));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(133, 153, 255, 0.26);
+    border-radius: 20px;
+    box-shadow: 0 16px 45px rgba(3, 8, 22, 0.5);
+}
+
+.hero-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-card::after {
+    content: "";
+    position: absolute;
+    width: 340px;
+    height: 340px;
+    right: -120px;
+    top: -180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(133, 153, 255, 0.25), transparent 65%);
+}
+
+.hero-badge {
+    display: inline-block;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #d6e2ff;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(109, 133, 255, 0.18);
+    border: 1px solid rgba(152, 171, 255, 0.32);
+    margin-bottom: 0.95rem;
+}
+
+.hero-subtitle {
+    color: #c6d4ff;
+    max-width: 780px;
+    line-height: 1.65;
+}
+
+.step-card,
+.result-shell {
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.step-card:hover,
+.result-shell:hover {
+    transform: translateY(-1px);
+    border-color: rgba(157, 176, 255, 0.42);
+    box-shadow: 0 18px 48px rgba(3, 8, 22, 0.56);
 }
 
 .form-select,
 .form-select:focus {
-    background-color: rgba(14, 19, 38, 0.9);
+    background-color: rgba(12, 18, 36, 0.92);
     color: #f8faff;
-    border-color: rgba(132, 153, 255, 0.4);
+    border-color: rgba(132, 153, 255, 0.48);
     box-shadow: none;
+    border-radius: 14px;
+}
+
+.form-label {
+    color: #dbe6ff;
+    font-weight: 600;
+    margin-bottom: 0.55rem;
 }
 
 .btn-neon {
-    background: linear-gradient(135deg, #5f7cff 0%, #8d5cff 100%);
+    background: linear-gradient(135deg, #5f7cff 0%, #8d5cff 55%, #a060ff 100%);
     color: #fff;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0.01em;
     border: 0;
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    box-shadow: 0 10px 26px rgba(104, 110, 255, 0.35);
 }
 
 .btn-neon:hover {
-    background: linear-gradient(135deg, #6f8aff 0%, #9969ff 100%);
+    background: linear-gradient(135deg, #7390ff 0%, #9a67ff 60%, #ad74ff 100%);
     color: #fff;
 }
 
@@ -38,8 +139,16 @@ body {
 }
 
 .result-content {
-    color: #dfe7ff;
-    line-height: 1.8;
+    color: #e4ecff;
+    line-height: 1.82;
+    font-size: 1.01rem;
+}
+
+#result-title {
+    color: #f7f9ff;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin-bottom: 1rem !important;
 }
 
 .result-content p {
@@ -87,10 +196,10 @@ body {
 
 .result-content.relationship-view .relation-item {
     margin-bottom: 0.65rem;
-    padding: 0.7rem 0.85rem;
+    padding: 0.74rem 0.9rem;
     border-radius: 12px;
-    background: rgba(19, 28, 57, 0.72);
-    border: 1px solid rgba(126, 148, 255, 0.2);
+    background: linear-gradient(180deg, rgba(28, 40, 78, 0.72), rgba(20, 30, 58, 0.66));
+    border: 1px solid rgba(126, 148, 255, 0.24);
 }
 
 .result-content.relationship-view .relation-label {
@@ -103,4 +212,14 @@ body {
 .result-content.relationship-view .relation-value {
     color: #d7e3ff;
     line-height: 1.65;
+}
+
+@media (max-width: 576px) {
+    .hero-badge {
+        font-size: 0.72rem;
+    }
+
+    .result-content {
+        font-size: 0.96rem;
+    }
 }
