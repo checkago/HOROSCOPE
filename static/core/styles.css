@@ -444,3 +444,71 @@ main.container {
     background: linear-gradient(to right, #8b9eff, #b38cff);
     border-radius: 3px;
 }
+
+/* Статьи: заголовки ближе к размеру текста, меньше «плакатности» */
+.article-reading {
+    font-size: 1.04rem;
+    line-height: 1.78;
+    max-width: 44rem;
+}
+
+.article-reading h1 {
+    font-size: 1.38rem;
+    font-weight: 650;
+    margin: 0 0 0.85rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid rgba(130, 155, 255, 0.18);
+    color: #eef2ff;
+    letter-spacing: -0.01em;
+}
+
+.article-reading h2 {
+    font-size: 1.07rem;
+    font-weight: 600;
+    margin: 1.35rem 0 0.5rem;
+    color: #c5d2ff;
+    letter-spacing: 0.01em;
+}
+
+.article-reading h3,
+.article-reading h4 {
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin: 1.05rem 0 0.4rem;
+    color: #aebfff;
+}
+
+.article-reading h3::before,
+.article-reading h4::before {
+    display: none !important;
+}
+
+.article-reading p {
+    margin-bottom: 0.95rem;
+}
+
+.article-reading ul,
+.article-reading ol {
+    margin-bottom: 0.95rem;
+    padding-left: 1.15rem;
+}
+
+.article-reading li {
+    margin-bottom: 0.35rem;
+}
+
+.article-reading hr {
+    margin: 1.15rem 0;
+    border: 0;
+    border-top: 1px solid rgba(120, 140, 255, 0.22);
+    opacity: 1;
+}
+
+@media (max-width: 576px) {
+    .article-reading {
+        font-size: 1rem;
+    }
+    .article-reading h1 {
+        font-size: 1.28rem;
+    }
+}
