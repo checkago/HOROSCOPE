@@ -19,3 +19,4 @@ media/
 .env
 docker-compose.yml
 nginx/
+caddy/

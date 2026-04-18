@@ -52,6 +52,7 @@ python manage.py runserver 0.0.0.0:8000
 - `DJANGO_CSRF_TRUSTED_ORIGINS` — trusted origins через запятую
 - `DJANGO_SQLITE_PATH` — путь к SQLite-файлу
 - `PUBLIC_SITE_URL` — базовый URL сайта (канонические ссылки в SEO)
+- `SITE_DOMAIN` — имя хоста для Caddy (Let's Encrypt, порты 80/443)
 
 ## Docker-деплой (Ubuntu Server)
 
@@ -85,7 +86,8 @@ docker compose logs -f web
 - `core/` — модели, API, импорт данных, основная логика
 - `templates/core/` — HTML-шаблон главной страницы
 - `static/core/` — стили и клиентский JS
-- `nginx/default.conf` — прокси Nginx (HTTP) к Gunicorn и раздача `/static/`
+- `nginx/default.conf` — внутренний прокси Nginx (HTTP) к Gunicorn и `/static/`
+- `caddy/Caddyfile` — Caddy: TLS и прокси на Nginx
 - `docker-compose.yml`, `Dockerfile`, `entrypoint.sh` — контейнеризация и запуск
 
 ## GitHub
