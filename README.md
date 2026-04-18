@@ -51,24 +51,20 @@ python manage.py runserver 0.0.0.0:8000
 - `DJANGO_ALLOWED_HOSTS` — список хостов через запятую
 - `DJANGO_CSRF_TRUSTED_ORIGINS` — trusted origins через запятую
 - `DJANGO_SQLITE_PATH` — путь к SQLite-файлу
+- `PUBLIC_SITE_URL` — базовый URL сайта (канонические ссылки в SEO)
+- `DOMAIN`, `CERTBOT_EMAIL`, `CERTBOT_RENEW_SLEEP_SEC` — домен и Let's Encrypt для Docker Nginx
 
 ## Docker-деплой (Ubuntu Server)
 
 1. Установить Docker и Compose plugin.
-2. В корне проекта:
-
-```bash
-cp .env.example .env
-```
-
-3. Заполнить `.env` (домен/IP, секретный ключ).
-4. Запустить:
+2. В корне проекта лежит рабочий `.env` (домен `fizikazodiaka.ru`); при необходимости отредактируйте ключ и почту.
+3. Запустить:
 
 ```bash
 docker compose up -d --build
 ```
 
-5. Проверить:
+4. Проверить:
 
 ```bash
 docker compose ps
@@ -83,7 +79,7 @@ docker compose logs -f web
 - `core/` — модели, API, импорт данных, основная логика
 - `templates/core/` — HTML-шаблон главной страницы
 - `static/core/` — стили и клиентский JS
-- `nginx/default.conf` — конфиг прокси для контейнера Nginx
+- `nginx/` — образ Nginx с шаблонами конфигурации и поддержкой Let's Encrypt
 - `docker-compose.yml`, `Dockerfile`, `entrypoint.sh` — контейнеризация и запуск
 
 ## GitHub
