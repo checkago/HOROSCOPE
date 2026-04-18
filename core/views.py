@@ -29,6 +29,11 @@ def index(request: HttpRequest):
     return render(request, "core/index.html")
 
 
+def about_view(request: HttpRequest):
+    """Страница «О подходе» — фундамент доверия проекта."""
+    return render(request, "core/about.html")
+
+
 def options_api(request: HttpRequest) -> JsonResponse:
     mode = request.GET.get("mode")
 
