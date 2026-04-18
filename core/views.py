@@ -8,6 +8,7 @@ from django.conf import settings
 from django.http import Http404, HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render
 
+from .article_loader import get_article_from_disk, load_article_stubs_from_disk
 from .models import Article, Profile, Relationship
 
 
@@ -42,7 +43,11 @@ def about_view(request: HttpRequest):
 
 
 def article_list(request: HttpRequest):
-    articles = Article.objects.only("slug", "title", "summary", "sort_order")
+    articles = list(
+        Article.objects.only("slug", "title", "summary", "sort_order").order_by("sort_order", "slug")
+    )
+    if not articles:
+        articles = load_article_stubs_from_disk()
     return render(
         request,
         "core/article_list.html",
@@ -51,7 +56,11 @@ def article_list(request: HttpRequest):
 
 
 def article_detail(request: HttpRequest, slug: str):
-    article = get_object_or_404(Article, slug=slug)
+    article = Article.objects.filter(slug=slug).first()
+    if article is None:
+        article = get_article_from_disk(slug)
+    if article is None:
+        raise Http404("Статья не найдена")
     return render(
         request,
         "core/article_detail.html",

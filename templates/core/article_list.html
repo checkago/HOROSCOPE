@@ -68,7 +68,7 @@
             {% for a in articles %}
             <a class="article-card" href="/stati/{{ a.slug }}/">
                 <h2>{{ a.title }}</h2>
-                <p>{{ a.summary }}</p>
+                <p>{{ a.summary|truncatechars:420 }}</p>
             </a>
             {% empty %}
             <p style="color:#8899cc;">Сейчас здесь нет опубликованных материалов.</p>
