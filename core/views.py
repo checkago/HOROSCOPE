@@ -20,6 +20,7 @@ from .relationship_display import (
     LABEL_VULN,
     LABEL_WHY,
     humanize_relationship_field,
+    physics_laws_block,
 )
 
 
@@ -475,8 +476,8 @@ def result_api(request: HttpRequest) -> JsonResponse:
         content = [
             f"### {relationship.heading}",
             "",
-            "Сначала — как обычно говорят о паре: без «типа взаимодействия» и «связанного состояния». "
-            "Ниже, если захотите углубиться, останется развёрнутый текст модели.",
+            "Сначала — как обычно говорят о паре; затем короткий блок **законов и формул** как подсветка к тому же смыслу; "
+            "ниже — развёрнутый текст модели, если захотите углубиться.",
             "",
         ]
         if (relationship.result_line or "").strip():
@@ -496,6 +497,20 @@ def result_api(request: HttpRequest) -> JsonResponse:
             content.append(f"- **{LABEL_SYNTHESIS}:** {relationship.synthesis.strip()}")
         if (relationship.vulnerabilities or "").strip():
             content.append(f"- **{LABEL_VULN}:** {relationship.vulnerabilities.strip()}")
+        content.append("")
+        content.append(
+            physics_laws_block(
+                interaction_raw=(relationship.interaction_type or "").strip(),
+                bound_raw=(relationship.bound_state or "").strip(),
+                result_line=(relationship.result_line or "").strip(),
+                human_coda=(getattr(relationship, "human_coda", "") or "").strip(),
+                why=(relationship.why or "").strip(),
+                quantum=(relationship.quantum_dynamics or "").strip(),
+                intimacy=(relationship.intimacy or "").strip(),
+                synthesis=(relationship.synthesis or "").strip(),
+                vulnerabilities=(relationship.vulnerabilities or "").strip(),
+            )
+        )
         content.extend(
             [
                 "",
