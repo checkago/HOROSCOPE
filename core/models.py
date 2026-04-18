@@ -53,3 +53,19 @@ class Relationship(models.Model):
 
     def __str__(self) -> str:
         return f"{self.source} -> {self.target}"
+
+
+class Article(models.Model):
+    """Материалы раздела «Статьи»: текст в Markdown, порядок из имени файла при импорте."""
+
+    slug = models.SlugField(max_length=140, unique=True)
+    title = models.CharField(max_length=220)
+    summary = models.TextField(blank=True)
+    body_markdown = models.TextField()
+    sort_order = models.PositiveSmallIntegerField(default=0, db_index=True)
+
+    class Meta:
+        ordering = ("sort_order", "slug")
+
+    def __str__(self) -> str:
+        return self.title

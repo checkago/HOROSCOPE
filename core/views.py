@@ -8,7 +8,7 @@ from django.conf import settings
 from django.http import Http404, HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render
 
-from .models import Profile, Relationship
+from .models import Article, Profile, Relationship
 
 
 def _get_relationship(source_id: str, target_id: str) -> Relationship:
@@ -39,6 +39,24 @@ def index(request: HttpRequest):
 def about_view(request: HttpRequest):
     """Страница «О подходе» — фундамент доверия проекта."""
     return render(request, "core/about.html")
+
+
+def article_list(request: HttpRequest):
+    articles = Article.objects.only("slug", "title", "summary", "sort_order")
+    return render(
+        request,
+        "core/article_list.html",
+        {"articles": articles},
+    )
+
+
+def article_detail(request: HttpRequest, slug: str):
+    article = get_object_or_404(Article, slug=slug)
+    return render(
+        request,
+        "core/article_detail.html",
+        {"article": article},
+    )
 
 
 def options_api(request: HttpRequest) -> JsonResponse:

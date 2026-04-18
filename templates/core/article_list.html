@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статьи — Физика Зодиака</title>
+    <meta name="description" content="Материалы о физико-химической модели знаков, куспидов и отношений: суперпозиция, резонанс, декогеренция, границы и честность в паре.">
+    <meta name="robots" content="index,follow">
+    <link rel="icon" type="image/png" href="/static/core/favicon.png">
+    <link rel="apple-touch-icon" href="/static/core/favicon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/core/styles.css">
+    <style>
+        .article-list { max-width: 720px; margin: 0 auto; }
+        .article-card {
+            display: block;
+            padding: 1.35rem 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 14px;
+            border: 1px solid rgba(120, 140, 255, 0.18);
+            background: rgba(18, 22, 42, 0.55);
+            text-decoration: none;
+            color: #e0e8ff;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .article-card:hover {
+            border-color: rgba(160, 180, 255, 0.45);
+            background: rgba(24, 30, 55, 0.75);
+            color: #f0f4ff;
+        }
+        .article-card h2 { font-size: 1.2rem; margin: 0 0 0.5rem; color: #c8d6ff; }
+        .article-card p { margin: 0; color: #9aacd8; font-size: 0.95rem; line-height: 1.55; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <div class="logo-symbol">⟐</div>
+                    <div>
+                        <span class="logo-main">ФИЗИКА</span>
+                        <span class="logo-secondary">ЗОДИАКА</span>
+                    </div>
+                </a>
+                <nav class="nav">
+                    <a href="/" class="nav-link">Инструмент</a>
+                    <a href="/o-podkhode/" class="nav-link">О подходе</a>
+                    <a href="/stati/" class="nav-link active">Статьи</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+
+    <main class="container py-5">
+        <div class="glass p-4 p-md-5 mb-4">
+            <h1 class="display-6 mb-2" style="background: linear-gradient(90deg, #c8d6ff, #a0b0ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Статьи
+            </h1>
+            <p class="lead mb-0" style="color: #a8b8e0;">Разбор идей проекта без шаблонной астрологии: модели, границы, динамика пар.</p>
+        </div>
+
+        <div class="article-list">
+            {% for a in articles %}
+            <a class="article-card" href="/stati/{{ a.slug }}/">
+                <h2>{{ a.title }}</h2>
+                <p>{{ a.summary }}</p>
+            </a>
+            {% empty %}
+            <p style="color:#8899cc;">Пока нет статей. Выполните <code style="color:#c8d6ff;">python manage.py import_articles_md</code>.</p>
+            {% endfor %}
+        </div>
+    </main>
+</body>
+</html>
