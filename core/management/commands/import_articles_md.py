@@ -8,6 +8,9 @@ from django.core.management.base import BaseCommand
 
 from core.models import Article
 
+# Минимальная длина текста статьи (символы UTF-8) для выдачи и SEO.
+MIN_SEO_CHARS = 6000
+
 
 def _parse_article_file(raw: str) -> tuple[str, str, str]:
     text = raw.lstrip("\ufeff").strip()
@@ -39,7 +42,8 @@ def _parse_article_file(raw: str) -> tuple[str, str, str]:
         body = "\n".join(lines[idx:]).strip()
     if not summary:
         summary = (body or text)[:280].rsplit(" ", 1)[0] + "…" if len(body or text) > 280 else (body or text)
-    body_md = f"# {title}\n\n{body}" if body else text
+    # В БД и на странице — весь файл: лид до `---` даёт контекст и длину для SEO; после `---` — основной текст.
+    body_md = text
     return title, summary, body_md
 
 
@@ -65,6 +69,12 @@ class Command(BaseCommand):
             slug = m.group(2)
             raw = path.read_text(encoding="utf-8")
             title, summary, body_md = _parse_article_file(raw)
+            if len(body_md) < MIN_SEO_CHARS:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"{path.name}: markdown короче {MIN_SEO_CHARS} символов ({len(body_md)})"
+                    )
+                )
             Article.objects.update_or_create(
                 slug=slug,
                 defaults={
