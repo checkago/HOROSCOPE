@@ -224,6 +224,12 @@ def result_api(request: HttpRequest) -> JsonResponse:
                 f"- **Ядерный синтез / Химия:** {relationship.synthesis}",
                 f"- **Уязвимости:** {relationship.vulnerabilities}",
                 f"- **Итог одной фразой:** {relationship.result_line}",
+            ]
+        )
+        if getattr(relationship, "human_coda", "").strip():
+            content.append(f"- **По-человечески:** {relationship.human_coda.strip()}")
+        content.extend(
+            [
                 "",
                 _build_state_poetic_block(relationship),
                 "",

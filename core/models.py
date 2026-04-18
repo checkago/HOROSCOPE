@@ -44,6 +44,7 @@ class Relationship(models.Model):
     synthesis = models.TextField(blank=True)
     vulnerabilities = models.TextField(blank=True)
     result_line = models.TextField(blank=True)
+    human_coda = models.TextField(blank=True)
     enriched_text = models.TextField(blank=True)
 
     class Meta:
