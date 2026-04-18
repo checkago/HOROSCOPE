@@ -54,7 +54,7 @@ function resetSeoToDefaults() {
     }
 }
 
-function applyCharacteristicSeo(seo) {
+function applyDynamicSeo(seo) {
     if (!seo || !seo.apply) {
         resetSeoToDefaults();
         return;
@@ -77,10 +77,23 @@ function applyCharacteristicSeo(seo) {
             ld.textContent = seo.json_ld;
         }
     }
-    if (window.history && window.history.replaceState && seo.profile_id != null) {
-        const u = new URL(window.location.href);
+    if (!window.history || !window.history.replaceState) {
+        return;
+    }
+    const u = new URL(window.location.href);
+    if (seo.profile_id != null) {
         u.searchParams.set("mode", "characteristic");
         u.searchParams.set("profile_id", String(seo.profile_id));
+        u.searchParams.delete("source_id");
+        u.searchParams.delete("target_id");
+        window.history.replaceState(null, "", `${u.pathname}?${u.searchParams.toString()}`);
+        return;
+    }
+    if (seo.source_id != null && seo.target_id != null) {
+        u.searchParams.set("mode", "relationship");
+        u.searchParams.set("source_id", String(seo.source_id));
+        u.searchParams.set("target_id", String(seo.target_id));
+        u.searchParams.delete("profile_id");
         window.history.replaceState(null, "", `${u.pathname}?${u.searchParams.toString()}`);
     }
 }
@@ -183,10 +196,8 @@ const showResult = async (url) => {
     const data = await resp.json();
     resultTitle.textContent = data.title;
 
-    if (data.type === "relationship") {
-        resetSeoToDefaults();
-    } else if (data.seo) {
-        applyCharacteristicSeo(data.seo);
+    if (data.seo) {
+        applyDynamicSeo(data.seo);
     } else {
         resetSeoToDefaults();
     }
@@ -217,23 +228,64 @@ showRelationshipBtn.addEventListener("click", async () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
     const p = new URLSearchParams(window.location.search);
-    const id = p.get("profile_id");
-    if (p.get("mode") !== "characteristic" || !id) return;
-    modeSelect.value = "characteristic";
-    selectedMode = "characteristic";
-    step2Relationship.classList.add("hidden");
-    resultCard.classList.add("hidden");
-    resetSelect(profileSelect, "Выберите профиль");
-    const resp = await fetch("/api/options/?mode=characteristic");
-    const data = await resp.json();
-    data.items.forEach((item) => {
-        const opt = document.createElement("option");
-        opt.value = item.id;
-        opt.textContent = item.label;
-        profileSelect.appendChild(opt);
-    });
-    step2Characteristic.classList.remove("hidden");
-    profileSelect.value = id;
-    if (!profileSelect.value) return;
-    await showResult(`/api/result/?mode=characteristic&profile_id=${encodeURIComponent(id)}`);
+    const mode = p.get("mode");
+
+    if (mode === "characteristic") {
+        const id = p.get("profile_id");
+        if (!id) return;
+        modeSelect.value = "characteristic";
+        selectedMode = "characteristic";
+        step2Relationship.classList.add("hidden");
+        resultCard.classList.add("hidden");
+        resetSelect(profileSelect, "Выберите профиль");
+        const resp = await fetch("/api/options/?mode=characteristic");
+        const data = await resp.json();
+        data.items.forEach((item) => {
+            const opt = document.createElement("option");
+            opt.value = item.id;
+            opt.textContent = item.label;
+            profileSelect.appendChild(opt);
+        });
+        step2Characteristic.classList.remove("hidden");
+        profileSelect.value = id;
+        if (!profileSelect.value) return;
+        await showResult(`/api/result/?mode=characteristic&profile_id=${encodeURIComponent(id)}`);
+        return;
+    }
+
+    if (mode === "relationship") {
+        const sid = p.get("source_id");
+        const tid = p.get("target_id");
+        if (!sid || !tid) return;
+        modeSelect.value = "relationship";
+        selectedMode = "relationship";
+        step2Characteristic.classList.add("hidden");
+        resultCard.classList.add("hidden");
+        resetSelect(sourceSelect, "Выберите первый профиль");
+        resetSelect(targetSelect, "Выберите второй профиль");
+        const resp = await fetch("/api/options/?mode=relationship");
+        const data = await resp.json();
+        data.items.forEach((item) => {
+            const opt = document.createElement("option");
+            opt.value = item.id;
+            opt.textContent = item.label;
+            sourceSelect.appendChild(opt);
+        });
+        step2Relationship.classList.remove("hidden");
+        sourceSelect.value = sid;
+        if (!sourceSelect.value) return;
+        const rt = await fetch(`/api/relationship-targets/?source_id=${encodeURIComponent(sid)}`);
+        const targets = await rt.json();
+        targets.items.forEach((item) => {
+            const opt = document.createElement("option");
+            opt.value = item.id;
+            opt.textContent = item.label;
+            targetSelect.appendChild(opt);
+        });
+        targetSelect.value = tid;
+        if (!targetSelect.value) return;
+        await showResult(
+            `/api/result/?mode=relationship&source_id=${encodeURIComponent(sid)}&target_id=${encodeURIComponent(tid)}`
+        );
+    }
 });

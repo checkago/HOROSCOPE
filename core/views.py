@@ -227,6 +227,70 @@ def _seo_payload_for_cusp(request: HttpRequest, profile: Profile) -> dict:
     }
 
 
+def _seo_payload_for_relationship(
+    request: HttpRequest, relationship: Relationship
+) -> dict:
+    """Динамический SEO для пары профилей (режим отношений)."""
+    src = relationship.source
+    tgt = relationship.target
+    title = (
+        f"{src.display_name} и {tgt.display_name}: отношения — "
+        "физика взаимодействия | Физика знаков и куспидов"
+    )
+    parts = [
+        f"Пара «{src.display_name}» — «{tgt.display_name}».",
+        f"Тип взаимодействия: {(relationship.interaction_type or '').strip() or 'не определено'}.",
+    ]
+    bs = (relationship.bound_state or "").strip()
+    if bs:
+        parts.append(f"Связанное состояние: {bs}.")
+    rl = (relationship.result_line or "").strip()
+    if rl:
+        parts.append(rl)
+    else:
+        why = (relationship.why or "").strip()
+        if why:
+            parts.append(why)
+    desc = _truncate_plain(" ".join(parts))
+    keywords = (
+        f"{src.name}, {tgt.name}, отношения знаков, совместимость, "
+        "физико-химическая модель, физика знаков и куспидов"
+    )
+    q = {
+        "mode": "relationship",
+        "source_id": str(src.pk),
+        "target_id": str(tgt.pk),
+    }
+    canonical = _absolute_query_url(request, q)
+    json_ld = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": title,
+        "description": desc,
+        "url": canonical,
+        "inLanguage": "ru",
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "Физика знаков и куспидов",
+            "url": _absolute_path_url(request, "/"),
+        },
+    }
+    return {
+        "apply": True,
+        "source_id": src.pk,
+        "target_id": tgt.pk,
+        "title": title,
+        "description": desc,
+        "keywords": keywords,
+        "canonical": canonical,
+        "og_title": title,
+        "og_description": desc,
+        "twitter_title": title,
+        "twitter_description": desc,
+        "json_ld": json.dumps(json_ld, ensure_ascii=False),
+    }
+
+
 def _build_reference_relationship_block(relationship: Relationship) -> str:
     source = relationship.source
     target = relationship.target
@@ -365,6 +429,7 @@ def result_api(request: HttpRequest) -> JsonResponse:
         if not source_id or not target_id:
             return JsonResponse({"error": "source_id and target_id are required"}, status=400)
         relationship = _get_relationship(source_id, target_id)
+        seo = _seo_payload_for_relationship(request, relationship)
         content = [
             f"### {relationship.heading}",
             "",
@@ -402,7 +467,7 @@ def result_api(request: HttpRequest) -> JsonResponse:
                 "type": "relationship",
                 "kind": None,
                 "content_markdown": "\n".join(content),
-                "seo": {"apply": False},
+                "seo": seo,
             }
         )
 
