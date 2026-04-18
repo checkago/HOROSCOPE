@@ -112,7 +112,7 @@ def humanize_relationship_field(text: str) -> str:
 LABEL_INTERACTION = "Как вы друг на друга действуете"
 LABEL_BOUND = "Что между вами получается"
 LABEL_WHY = "Почему так может быть"
-LABEL_QUANTUM = "Если у партнёра куспид"
+LABEL_QUANTUM = "Про стык Водолей—Рыбы у партнёра"
 LABEL_INTIMACY = "Близость и контакт"
 LABEL_SYNTHESIS = "Тепло и «химия» между вами"
 LABEL_VULN = "Где больнее всего"
