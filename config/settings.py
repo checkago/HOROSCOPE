@@ -135,14 +135,7 @@ CSRF_TRUSTED_ORIGINS = [
     if origin.strip()
 ]
 
-# За nginx только по HTTP: secure-cookies ломают сайт (браузер не шлёт cookie по HTTP).
-# Включайте только если перед приложением есть HTTPS-прокси и он шлёт X-Forwarded-Proto: https.
-_behind_https_proxy = os.getenv("DJANGO_BEHIND_HTTPS_PROXY", "0").strip().lower() in (
-    "1",
-    "true",
-    "yes",
-)
-if not DEBUG and _behind_https_proxy:
+if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
