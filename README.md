@@ -52,6 +52,7 @@ python manage.py runserver 0.0.0.0:8000
 - `DJANGO_CSRF_TRUSTED_ORIGINS` — trusted origins через запятую
 - `DJANGO_SQLITE_PATH` — путь к SQLite-файлу
 - `PUBLIC_SITE_URL` — базовый URL сайта (канонические ссылки в SEO)
+- `DJANGO_BEHIND_HTTPS_PROXY` — `1`, только если перед приложением есть HTTPS-прокси с заголовком `X-Forwarded-Proto: https`; в типичном Docker (nginx → gunicorn по HTTP) оставьте `0`
 
 ## Docker-деплой (Ubuntu Server)
 
