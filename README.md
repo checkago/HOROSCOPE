@@ -79,6 +79,8 @@ docker compose logs -f web
 
 Сервис будет доступен по `http://<server-ip>/` через Nginx.
 
+Если после `git pull` контейнеры не стартуют: убедитесь, что в корне есть **`cp .env.example .env`** и нужные переменные; смотрите логи: `docker compose logs web`, `docker compose logs nginx`.
+
 ## Структура проекта
 
 - `config/` — настройки Django и маршрутизация проекта
