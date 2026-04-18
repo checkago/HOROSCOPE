@@ -52,7 +52,6 @@ python manage.py runserver 0.0.0.0:8000
 - `DJANGO_CSRF_TRUSTED_ORIGINS` — trusted origins через запятую
 - `DJANGO_SQLITE_PATH` — путь к SQLite-файлу
 - `PUBLIC_SITE_URL` — базовый URL сайта (канонические ссылки в SEO)
-- `DOMAIN`, `CERTBOT_EMAIL`, `CERTBOT_RENEW_SLEEP_SEC` — домен и Let's Encrypt для Docker Nginx
 
 ## Docker-деплой (Ubuntu Server)
 
@@ -74,7 +73,9 @@ docker compose ps
 docker compose logs -f web
 ```
 
-Сервис будет доступен по `http://<server-ip>/` через Nginx.
+Сервис будет доступен по `http://<server-ip>/` или по домену через Nginx на порту **80**.
+
+**HTTPS:** в этом `docker-compose` Nginx только проксирует HTTP. Сертификат подключайте снаружи: TLS у провайдера / облачный прокси (например, с терминацией HTTPS перед сервером), либо отдельный reverse-proxy с Let’s Encrypt на хосте перед контейнером.
 
 Если после `git pull` контейнеры не стартуют: смотрите логи `docker compose logs web` и `docker compose logs nginx`.
 
@@ -84,7 +85,7 @@ docker compose logs -f web
 - `core/` — модели, API, импорт данных, основная логика
 - `templates/core/` — HTML-шаблон главной страницы
 - `static/core/` — стили и клиентский JS
-- `nginx/` — образ Nginx с шаблонами конфигурации и поддержкой Let's Encrypt
+- `nginx/default.conf` — прокси Nginx (HTTP) к Gunicorn и раздача `/static/`
 - `docker-compose.yml`, `Dockerfile`, `entrypoint.sh` — контейнеризация и запуск
 
 ## GitHub
