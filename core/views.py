@@ -343,9 +343,6 @@ def _build_reference_relationship_block(relationship: Relationship) -> str:
     tgt_superposition = _extract_field(target.characteristic_markdown, "- **Суперпозиция куспида:**")
 
     interaction = relationship.interaction_type.strip() or "не определено"
-    if source.name == "Лев" and target.name == "Куспид Водолей-Рыбы":
-        # Эталонное правило из основного промта.
-        interaction = "сильное (коллапс суперпозиции)"
     interaction_plain = humanize_relationship_field(interaction)
 
     lines = [
