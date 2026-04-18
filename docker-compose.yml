@@ -5,8 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: horoscope_web
     env_file:
-      - path: .env
-        required: false
+      - .env
     environment:
       DJANGO_SQLITE_PATH: /app/data/db.sqlite3
     expose:

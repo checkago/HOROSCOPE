@@ -57,12 +57,7 @@ python manage.py runserver 0.0.0.0:8000
 ## Docker-деплой (Ubuntu Server)
 
 1. Установить Docker и Compose plugin.
-2. Создать `.env` из шаблона и задать секрет и почту (файл `.env` в Git не хранится):
-
-```bash
-cp .env.example .env
-nano .env   # или другой редактор
-```
+2. В корне репозитория уже есть `.env` (домен и настройки); при необходимости отредактируйте секрет и почту на сервере после `git pull`.
 
 3. Запустить:
 
@@ -79,7 +74,7 @@ docker compose logs -f web
 
 Сервис будет доступен по `http://<server-ip>/` через Nginx.
 
-Если после `git pull` контейнеры не стартуют: убедитесь, что в корне есть **`cp .env.example .env`** и нужные переменные; смотрите логи: `docker compose logs web`, `docker compose logs nginx`.
+Если после `git pull` контейнеры не стартуют: смотрите логи `docker compose logs web` и `docker compose logs nginx`.
 
 ## Структура проекта
 
