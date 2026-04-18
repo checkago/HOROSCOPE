@@ -10,6 +10,17 @@ from django.shortcuts import get_object_or_404, render
 
 from .article_loader import get_article_from_disk, load_article_stubs_from_disk
 from .models import Article, Profile, Relationship
+from .relationship_display import (
+    LABEL_BOUND,
+    LABEL_INTIMACY,
+    LABEL_INTERACTION,
+    LABEL_QUANTUM,
+    LABEL_RESULT,
+    LABEL_SYNTHESIS,
+    LABEL_VULN,
+    LABEL_WHY,
+    humanize_relationship_field,
+)
 
 
 def _get_relationship(source_id: str, target_id: str) -> Relationship:
@@ -264,13 +275,14 @@ def _seo_payload_for_relationship(
         f"{src.display_name} и {tgt.display_name}: отношения — "
         "физика взаимодействия | Физика знаков и куспидов"
     )
+    hi = humanize_relationship_field((relationship.interaction_type or "").strip())
+    hb = humanize_relationship_field((relationship.bound_state or "").strip())
     parts = [
         f"Пара «{src.display_name}» — «{tgt.display_name}».",
-        f"Тип взаимодействия: {(relationship.interaction_type or '').strip() or 'не определено'}.",
+        f"{LABEL_INTERACTION}: {hi or 'не описано'}.",
     ]
-    bs = (relationship.bound_state or "").strip()
-    if bs:
-        parts.append(f"Связанное состояние: {bs}.")
+    if hb:
+        parts.append(f"{LABEL_BOUND}: {hb}.")
     rl = (relationship.result_line or "").strip()
     if rl:
         parts.append(rl)
@@ -333,6 +345,7 @@ def _build_reference_relationship_block(relationship: Relationship) -> str:
     if source.name == "Лев" and target.name == "Куспид Водолей-Рыбы":
         # Эталонное правило из основного промта.
         interaction = "сильное (коллапс суперпозиции)"
+    interaction_plain = humanize_relationship_field(interaction)
 
     lines = [
         "#### Эталонный расширенный разбор (физика + экспрессия)",
@@ -340,8 +353,8 @@ def _build_reference_relationship_block(relationship: Relationship) -> str:
         f"**Кто есть кто:** `{source.display_name}` как `{src_particle}` и `{target.display_name}` как `{tgt_particle}`. "
         f"Заряды ({src_charge}, {tgt_charge}) и спины ({src_spin}, {tgt_spin}) задают доступные каналы сцепления и рассеяния.",
         "",
-        f"**Почему именно это взаимодействие:** доминирует `{interaction}`; в наблюдаемой паре это означает, что "
-        "система не просто обменивается эмоцией, а физически ищет конфигурацию с меньшей энергией и более высокой связностью.",
+        f"**Почему именно это взаимодействие:** если сказать по-простому — {interaction_plain}. В формулировке модели: «{interaction}». "
+        "В наблюдаемой паре это значит, что система не просто обменивается эмоцией, а ищет конфигурацию с меньшей энергией и более высокой связностью.",
         "",
         "**Интимный канал:** при сближении волновые функции перекрываются, а интенсивность контакта растёт как функция "
         "фазовой синхронизации. Когда фазы совпадают, читатель чувствует это как «необъяснимую тягу», но физически это "
@@ -457,26 +470,32 @@ def result_api(request: HttpRequest) -> JsonResponse:
             return JsonResponse({"error": "source_id and target_id are required"}, status=400)
         relationship = _get_relationship(source_id, target_id)
         seo = _seo_payload_for_relationship(request, relationship)
+        hi = humanize_relationship_field((relationship.interaction_type or "").strip())
+        hb = humanize_relationship_field((relationship.bound_state or "").strip())
         content = [
             f"### {relationship.heading}",
             "",
-            f"- **Тип взаимодействия:** {relationship.interaction_type}",
-            f"- **Связанное состояние:** {relationship.bound_state}",
+            "Сначала — как обычно говорят о паре: без «типа взаимодействия» и «связанного состояния». "
+            "Ниже, если захотите углубиться, останется развёрнутый текст модели.",
+            "",
         ]
-        if relationship.why:
-            content.append(f"- **Почему именно так (физика):** {relationship.why}")
-        if relationship.quantum_dynamics:
-            content.append(f"- **Квантовая динамика куспида:** {relationship.quantum_dynamics}")
-        content.extend(
-            [
-                f"- **Интим (физика):** {relationship.intimacy}",
-                f"- **Ядерный синтез / Химия:** {relationship.synthesis}",
-                f"- **Уязвимости:** {relationship.vulnerabilities}",
-                f"- **Итог одной фразой:** {relationship.result_line}",
-            ]
-        )
+        if (relationship.result_line or "").strip():
+            content.append(f"- **{LABEL_RESULT}:** {relationship.result_line.strip()}")
         if getattr(relationship, "human_coda", "").strip():
             content.append(f"- **По-человечески:** {relationship.human_coda.strip()}")
+        content.append("")
+        content.append(f"- **{LABEL_INTERACTION}:** {hi or '—'}")
+        content.append(f"- **{LABEL_BOUND}:** {hb or '—'}")
+        if (relationship.why or "").strip():
+            content.append(f"- **{LABEL_WHY}:** {relationship.why.strip()}")
+        if (relationship.quantum_dynamics or "").strip():
+            content.append(f"- **{LABEL_QUANTUM}:** {relationship.quantum_dynamics.strip()}")
+        if (relationship.intimacy or "").strip():
+            content.append(f"- **{LABEL_INTIMACY}:** {relationship.intimacy.strip()}")
+        if (relationship.synthesis or "").strip():
+            content.append(f"- **{LABEL_SYNTHESIS}:** {relationship.synthesis.strip()}")
+        if (relationship.vulnerabilities or "").strip():
+            content.append(f"- **{LABEL_VULN}:** {relationship.vulnerabilities.strip()}")
         content.extend(
             [
                 "",
