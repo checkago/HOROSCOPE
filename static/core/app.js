@@ -1,3 +1,90 @@
+const SEO_DEFAULTS = (() => {
+    const pickMeta = (selector) => {
+        const el = document.querySelector(selector);
+        return el ? el.getAttribute("content") || "" : "";
+    };
+    const ld = document.getElementById("seo-jsonld");
+    return {
+        title: document.title,
+        description: pickMeta('meta[name="description"]'),
+        keywords: pickMeta('meta[name="keywords"]'),
+        canonical: (() => {
+            const el = document.querySelector('link[rel="canonical"]');
+            return el ? el.getAttribute("href") || "" : "";
+        })(),
+        ogTitle: pickMeta('meta[property="og:title"]'),
+        ogDesc: pickMeta('meta[property="og:description"]'),
+        ogUrl: pickMeta('meta[property="og:url"]'),
+        twTitle: pickMeta('meta[name="twitter:title"]'),
+        twDesc: pickMeta('meta[name="twitter:description"]'),
+        jsonLd: ld ? ld.textContent.trim() : "",
+    };
+})();
+
+function setMetaContent(selector, value) {
+    const el = document.querySelector(selector);
+    if (el && "content" in el) {
+        el.setAttribute("content", value);
+    }
+}
+
+function setLinkHref(rel, value) {
+    const el = document.querySelector(`link[rel="${rel}"]`);
+    if (el) {
+        el.setAttribute("href", value);
+    }
+}
+
+function resetSeoToDefaults() {
+    document.title = SEO_DEFAULTS.title;
+    setMetaContent('meta[name="description"]', SEO_DEFAULTS.description);
+    setMetaContent('meta[name="keywords"]', SEO_DEFAULTS.keywords);
+    setLinkHref("canonical", SEO_DEFAULTS.canonical);
+    setMetaContent('meta[property="og:title"]', SEO_DEFAULTS.ogTitle);
+    setMetaContent('meta[property="og:description"]', SEO_DEFAULTS.ogDesc);
+    setMetaContent('meta[property="og:url"]', SEO_DEFAULTS.ogUrl);
+    setMetaContent('meta[name="twitter:title"]', SEO_DEFAULTS.twTitle);
+    setMetaContent('meta[name="twitter:description"]', SEO_DEFAULTS.twDesc);
+    const ld = document.getElementById("seo-jsonld");
+    if (ld && SEO_DEFAULTS.jsonLd) {
+        ld.textContent = SEO_DEFAULTS.jsonLd;
+    }
+    if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, "", window.location.pathname || "/");
+    }
+}
+
+function applyCharacteristicSeo(seo) {
+    if (!seo || !seo.apply) {
+        resetSeoToDefaults();
+        return;
+    }
+    document.title = seo.title;
+    setMetaContent('meta[name="description"]', seo.description);
+    setMetaContent('meta[name="keywords"]', seo.keywords);
+    setLinkHref("canonical", seo.canonical);
+    setMetaContent('meta[property="og:title"]', seo.og_title);
+    setMetaContent('meta[property="og:description"]', seo.og_description);
+    setMetaContent('meta[property="og:url"]', seo.canonical);
+    setMetaContent('meta[name="twitter:title"]', seo.twitter_title);
+    setMetaContent('meta[name="twitter:description"]', seo.twitter_description);
+    const ld = document.getElementById("seo-jsonld");
+    if (ld && seo.json_ld) {
+        try {
+            const parsed = JSON.parse(seo.json_ld);
+            ld.textContent = JSON.stringify(parsed, null, 2);
+        } catch {
+            ld.textContent = seo.json_ld;
+        }
+    }
+    if (window.history && window.history.replaceState && seo.profile_id != null) {
+        const u = new URL(window.location.href);
+        u.searchParams.set("mode", "characteristic");
+        u.searchParams.set("profile_id", String(seo.profile_id));
+        window.history.replaceState(null, "", `${u.pathname}?${u.searchParams.toString()}`);
+    }
+}
+
 const modeSelect = document.getElementById("mode-select");
 const step2Characteristic = document.getElementById("step-2-characteristic");
 const step2Relationship = document.getElementById("step-2-relationship");
@@ -18,6 +105,7 @@ const resetSelect = (el, text) => {
 
 modeSelect.addEventListener("change", async (e) => {
     selectedMode = e.target.value;
+    resetSeoToDefaults();
     resultCard.classList.add("hidden");
     resetSelect(profileSelect, "Выберите профиль");
     resetSelect(sourceSelect, "Выберите первый профиль");
@@ -95,6 +183,14 @@ const showResult = async (url) => {
     const data = await resp.json();
     resultTitle.textContent = data.title;
 
+    if (data.type === "relationship") {
+        resetSeoToDefaults();
+    } else if (data.seo) {
+        applyCharacteristicSeo(data.seo);
+    } else {
+        resetSeoToDefaults();
+    }
+
     resultContent.classList.remove("relationship-view", "characteristic-view");
     if (data.type === "relationship") {
         resultContent.classList.add("relationship-view");
@@ -117,4 +213,27 @@ showCharacteristicBtn.addEventListener("click", async () => {
 showRelationshipBtn.addEventListener("click", async () => {
     if (!sourceSelect.value || !targetSelect.value) return;
     await showResult(`/api/result/?mode=relationship&source_id=${sourceSelect.value}&target_id=${targetSelect.value}`);
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const p = new URLSearchParams(window.location.search);
+    const id = p.get("profile_id");
+    if (p.get("mode") !== "characteristic" || !id) return;
+    modeSelect.value = "characteristic";
+    selectedMode = "characteristic";
+    step2Relationship.classList.add("hidden");
+    resultCard.classList.add("hidden");
+    resetSelect(profileSelect, "Выберите профиль");
+    const resp = await fetch("/api/options/?mode=characteristic");
+    const data = await resp.json();
+    data.items.forEach((item) => {
+        const opt = document.createElement("option");
+        opt.value = item.id;
+        opt.textContent = item.label;
+        profileSelect.appendChild(opt);
+    });
+    step2Characteristic.classList.remove("hidden");
+    profileSelect.value = id;
+    if (!profileSelect.value) return;
+    await showResult(`/api/result/?mode=characteristic&profile_id=${encodeURIComponent(id)}`);
 });

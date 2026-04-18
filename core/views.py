@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+import json
+import re
+from urllib.parse import urlencode
+
+from django.conf import settings
 from django.http import Http404, HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render
 
@@ -74,6 +81,150 @@ def _extract_field(markdown_text: str, prefix: str) -> str:
         if line.startswith(prefix):
             return line[len(prefix) :].strip()
     return ""
+
+
+def _truncate_plain(text: str, max_len: int = 158) -> str:
+    text = re.sub(r"\s+", " ", (text or "").strip())
+    if len(text) <= max_len:
+        return text
+    cut = text[: max_len - 1]
+    if " " in cut:
+        cut = cut.rsplit(" ", 1)[0]
+    return cut + "…"
+
+
+def _first_plain_paragraph_from_markdown(md: str) -> str:
+    for raw in md.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or line.startswith("---"):
+            continue
+        line = re.sub(r"\*\*([^*]+)\*\*", r"\1", line)
+        line = re.sub(r"`([^`]+)`", r"\1", line)
+        line = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", line)
+        if len(line) > 20:
+            return line
+    return ""
+
+
+def _absolute_path_url(request: HttpRequest, path: str) -> str:
+    if not path.startswith("/"):
+        path = "/" + path
+    base = getattr(settings, "PUBLIC_SITE_URL", "") or ""
+    if base:
+        return f"{base}{path}"
+    return request.build_absolute_uri(path)
+
+
+def _absolute_query_url(request: HttpRequest, query: dict[str, str]) -> str:
+    q = urlencode(query)
+    path = "/?" + q if q else "/"
+    return _absolute_path_url(request, path if q else "/")
+
+
+def _seo_payload_for_sign(request: HttpRequest, profile: Profile) -> dict:
+    """Динамический SEO для основного знака (не куспид)."""
+    particle = _extract_field(profile.characteristic_markdown, "- **Частица:**")
+    plain = _first_plain_paragraph_from_markdown(profile.characteristic_markdown)
+    gender_ru = profile.get_gender_display()
+    title = f"{profile.display_name} — физико-химическая характеристика | Физика знаков и куспидов"
+    if plain:
+        desc = _truncate_plain(f"{profile.display_name} ({gender_ru}): {plain}")
+    elif particle:
+        desc = _truncate_plain(
+            f"{profile.display_name}: модель «частица» — {particle}. "
+            "Физико-химическая характеристика знака без шаблонной астрологии."
+        )
+    else:
+        desc = _truncate_plain(
+            f"{profile.display_name}: характеристика знака в физико-химической интерпретации "
+            "(структура, взаимодействия, отношения)."
+        )
+    keywords = (
+        f"{profile.name}, зодиак, {gender_ru}, характеристика знака, физика знаков, "
+        "совместимость, физико-химическая модель"
+    )
+    q = {"mode": "characteristic", "profile_id": str(profile.pk)}
+    canonical = _absolute_query_url(request, q)
+    json_ld = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": title,
+        "description": desc,
+        "url": canonical,
+        "inLanguage": "ru",
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "Физика знаков и куспидов",
+            "url": _absolute_path_url(request, "/"),
+        },
+    }
+    return {
+        "apply": True,
+        "profile_id": profile.pk,
+        "title": title,
+        "description": desc,
+        "keywords": keywords,
+        "canonical": canonical,
+        "og_title": title,
+        "og_description": desc,
+        "twitter_title": title,
+        "twitter_description": desc,
+        "json_ld": json.dumps(json_ld, ensure_ascii=False),
+    }
+
+
+def _seo_payload_for_cusp(request: HttpRequest, profile: Profile) -> dict:
+    """Динамический SEO для куспида (граница двух знаков, суперпозиция в модели)."""
+    particle = _extract_field(profile.characteristic_markdown, "- **Частица:**")
+    sup = _extract_field(profile.characteristic_markdown, "- **Суперпозиция куспида:**")
+    plain = _first_plain_paragraph_from_markdown(profile.characteristic_markdown)
+    gender_ru = profile.get_gender_display()
+    title = f"{profile.display_name} — характеристика куспида | Физика знаков и куспидов"
+    if plain:
+        desc = _truncate_plain(f"{profile.display_name} ({gender_ru}): {plain}")
+    elif sup:
+        desc = _truncate_plain(f"{profile.display_name}: {sup}")
+    elif particle:
+        desc = _truncate_plain(
+            f"{profile.display_name}: физико-химическая модель (частица: {particle}). "
+            "Куспид — граница знаков и суперпозиция режимов."
+        )
+    else:
+        desc = _truncate_plain(
+            f"{profile.display_name}: характеристика куспида в физико-химической интерпретации."
+        )
+    keywords = (
+        f"{profile.name}, куспид, {gender_ru}, граница знаков, суперпозиция, "
+        "физика знаков, характеристика куспида, совместимость"
+    )
+    q = {"mode": "characteristic", "profile_id": str(profile.pk)}
+    canonical = _absolute_query_url(request, q)
+    json_ld = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": title,
+        "description": desc,
+        "url": canonical,
+        "inLanguage": "ru",
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "Физика знаков и куспидов",
+            "url": _absolute_path_url(request, "/"),
+        },
+    }
+    return {
+        "apply": True,
+        "profile_id": profile.pk,
+        "title": title,
+        "description": desc,
+        "keywords": keywords,
+        "canonical": canonical,
+        "og_title": title,
+        "og_description": desc,
+        "twitter_title": title,
+        "twitter_description": desc,
+        "json_ld": json.dumps(json_ld, ensure_ascii=False),
+    }
 
 
 def _build_reference_relationship_block(relationship: Relationship) -> str:
@@ -194,11 +345,17 @@ def result_api(request: HttpRequest) -> JsonResponse:
         if not profile_id:
             return JsonResponse({"error": "profile_id is required"}, status=400)
         profile = get_object_or_404(Profile, id=profile_id)
+        if profile.kind == Profile.KIND_SIGN:
+            seo = _seo_payload_for_sign(request, profile)
+        else:
+            seo = _seo_payload_for_cusp(request, profile)
         return JsonResponse(
             {
                 "title": profile.display_name,
                 "type": "characteristic",
+                "kind": profile.kind,
                 "content_markdown": profile.characteristic_markdown,
+                "seo": seo,
             }
         )
 
@@ -243,7 +400,9 @@ def result_api(request: HttpRequest) -> JsonResponse:
             {
                 "title": f"{relationship.source.display_name} -> {relationship.target.display_name}",
                 "type": "relationship",
+                "kind": None,
                 "content_markdown": "\n".join(content),
+                "seo": {"apply": False},
             }
         )
 
