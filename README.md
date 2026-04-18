@@ -57,7 +57,13 @@ python manage.py runserver 0.0.0.0:8000
 ## Docker-деплой (Ubuntu Server)
 
 1. Установить Docker и Compose plugin.
-2. В корне проекта лежит рабочий `.env` (домен `fizikazodiaka.ru`); при необходимости отредактируйте ключ и почту.
+2. Создать `.env` из шаблона и задать секрет и почту (файл `.env` в Git не хранится):
+
+```bash
+cp .env.example .env
+nano .env   # или другой редактор
+```
+
 3. Запустить:
 
 ```bash
