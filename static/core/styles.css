@@ -142,6 +142,61 @@ main.container {
     border-radius: 2px;
 }
 
+/* Мобильное меню: кнопка по умолчанию скрыта (десктоп) */
+.nav-toggle {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid rgba(140, 160, 255, 0.28);
+    border-radius: 12px;
+    background: rgba(22, 28, 52, 0.75);
+    color: #e0e7ff;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.nav-toggle:hover {
+    background: rgba(32, 38, 68, 0.9);
+    border-color: rgba(160, 180, 255, 0.4);
+}
+
+.nav-toggle:focus-visible {
+    outline: 2px solid rgba(139, 158, 255, 0.75);
+    outline-offset: 2px;
+}
+
+.nav-toggle-bar {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+    transition: transform 0.22s ease, opacity 0.22s ease;
+}
+
+body.js-nav-open .nav-toggle-bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+body.js-nav-open .nav-toggle-bar:nth-child(2) {
+    opacity: 0;
+}
+
+body.js-nav-open .nav-toggle-bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+.nav-backdrop {
+    display: none;
+}
+
 /* Premium Glass Cards */
 .glass {
     background: rgba(15, 20, 42, 0.72);
@@ -375,10 +430,86 @@ main.container {
     .header {
         padding: 1rem 0;
     }
-    
+
+    .header-content {
+        position: relative;
+        align-items: center;
+    }
+
+    .nav-toggle {
+        display: inline-flex;
+        z-index: 220;
+    }
+
+    .nav-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 180;
+        background: rgba(4, 6, 14, 0.55);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+
+    body.js-nav-open .nav-backdrop {
+        display: block;
+    }
+
     .nav {
-        gap: 1.4rem;
-        font-size: 0.92rem;
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: min(300px, 86vw);
+        height: 100vh;
+        height: 100dvh;
+        margin: 0;
+        padding: 4.75rem 1.35rem 1.5rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        font-size: 1.02rem;
+        background: rgba(11, 13, 24, 0.97);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-left: 1px solid rgba(120, 140, 255, 0.18);
+        box-shadow: -12px 0 40px rgba(0, 0, 0, 0.45);
+        z-index: 200;
+        transform: translateX(100%);
+        visibility: hidden;
+        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.28s;
+    }
+
+    body.js-nav-open .nav {
+        transform: translateX(0);
+        visibility: visible;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .nav {
+            transition: none;
+        }
+        .nav-toggle-bar {
+            transition: none;
+        }
+    }
+
+    .nav-link {
+        padding: 0.9rem 0;
+        border-bottom: 1px solid rgba(120, 140, 255, 0.12);
+    }
+
+    .nav-link:last-child {
+        border-bottom: none;
+    }
+
+    .nav-link.active::after {
+        display: none;
+    }
+
+    .nav-link.active {
+        color: #eef2ff;
+        padding-left: 0.6rem;
+        border-left: 3px solid #8b9eff;
     }
     
     .hero-card {

@@ -1,0 +1,26 @@
+{# nav_active: tool | about | articles #}
+<header class="header">
+    <div class="container">
+        <div class="header-content">
+            <a href="/" class="logo">
+                <img src="/static/core/favicon.png" alt="" class="logo-img" width="40" height="40" decoding="async">
+                <div>
+                    <span class="logo-main">ФИЗИКА</span>
+                    <span class="logo-secondary">ЗОДИАКА</span>
+                </div>
+            </a>
+            <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Меню">
+                <span class="nav-toggle-bar" aria-hidden="true"></span>
+                <span class="nav-toggle-bar" aria-hidden="true"></span>
+                <span class="nav-toggle-bar" aria-hidden="true"></span>
+            </button>
+            <div class="nav-backdrop" id="nav-backdrop" aria-hidden="true"></div>
+            <nav class="nav" id="site-nav" aria-label="Основное меню">
+                <a href="/" class="nav-link{% if nav_active == 'tool' %} active{% endif %}">Инструмент</a>
+                <a href="/o-podkhode/" class="nav-link{% if nav_active == 'about' %} active{% endif %}">О подходе</a>
+                <a href="/stati/" class="nav-link{% if nav_active == 'articles' %} active{% endif %}">Статьи</a>
+            </nav>
+        </div>
+    </div>
+</header>
+<script src="/static/core/nav.js" defer></script>
