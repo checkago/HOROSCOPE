@@ -4,8 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ article.title }} — Физика Зодиака</title>
-    <meta name="description" content="{{ article.summary|truncatechars:200 }}">
+    <meta name="description" content="{{ article.summary|default:article.title|truncatechars:200 }}">
     <meta name="robots" content="index,follow">
+    <link rel="canonical" href="{{ canonical_url }}">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="{{ article.title }} — Физика Зодиака">
+    <meta property="og:description" content="{{ article.summary|default:article.title|truncatechars:200 }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ article.title }} — Физика Зодиака">
+    <meta name="twitter:description" content="{{ article.summary|default:article.title|truncatechars:200 }}">
     <link rel="icon" type="image/png" href="/static/core/favicon.png">
     <link rel="apple-touch-icon" href="/static/core/favicon.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -42,7 +50,7 @@
 
     <main class="container py-5">
         <div class="glass p-4 p-md-5">
-            <p class="article-nav"><a href="/stati/">← Все статьи</a></p>
+            <p class="article-nav"><a href="{% url 'article_list' %}">← Все статьи</a></p>
             <article id="article-html" class="result-content characteristic-view article-reading"></article>
         </div>
     </main>

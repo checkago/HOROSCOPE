@@ -73,31 +73,26 @@ def article_detail(request: HttpRequest, slug: str):
         article = get_article_from_disk(slug)
     if article is None:
         raise Http404("Статья не найдена")
+    canonical_url = _absolute_path_url(request, request.path)
     return render(
         request,
         "core/article_detail.html",
-        {"article": article},
+        {
+            "article": article,
+            "canonical_url": canonical_url,
+        },
     )
 
 
 def options_api(request: HttpRequest) -> JsonResponse:
     mode = request.GET.get("mode")
-
-    if mode == "characteristic":
-        items = [
-            {"id": p.id, "label": p.display_name}
-            for p in Profile.objects.all().only("id", "display_name")
-        ]
-        return JsonResponse({"items": items})
-
-    if mode == "relationship":
-        items = [
-            {"id": p.id, "label": p.display_name}
-            for p in Profile.objects.all().only("id", "display_name")
-        ]
-        return JsonResponse({"items": items})
-
-    return JsonResponse({"error": "Unsupported mode"}, status=400)
+    if mode not in ("characteristic", "relationship"):
+        return JsonResponse({"error": "Unsupported mode"}, status=400)
+    items = [
+        {"id": p.id, "label": p.display_name}
+        for p in Profile.objects.all().only("id", "display_name")
+    ]
+    return JsonResponse({"items": items})
 
 
 def relationship_targets_api(request: HttpRequest) -> JsonResponse:
