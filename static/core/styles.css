@@ -88,11 +88,13 @@ main.container {
     font-weight: 700;
 }
 
-.logo-symbol {
-    font-size: 28px;
-    line-height: 1;
-    color: #8b9eff;
-    filter: drop-shadow(0 0 8px rgba(139, 158, 255, 0.6));
+.logo-img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    display: block;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 8px rgba(139, 158, 255, 0.45));
 }
 
 .logo-main {
