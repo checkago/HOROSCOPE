@@ -1,4 +1,8 @@
 (function () {
+    try {
+        document.documentElement.classList.add("js");
+    } catch (_) {}
+
     const btn = document.getElementById("nav-toggle");
     const backdrop = document.getElementById("nav-backdrop");
     const nav = document.getElementById("site-nav");
@@ -53,9 +57,15 @@
         }
     });
 
-    mq.addEventListener("change", function (e) {
+    const onMqChange = function (e) {
         if (!e.matches) {
             close();
         }
-    });
+    };
+
+    if (typeof mq.addEventListener === "function") {
+        mq.addEventListener("change", onMqChange);
+    } else if (typeof mq.addListener === "function") {
+        mq.addListener(onMqChange);
+    }
 })();
