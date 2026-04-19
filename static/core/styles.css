@@ -456,6 +456,7 @@ body.js-nav-open .nav-toggle-bar:nth-child(3) {
     }
 
     html.js .nav {
+        display: flex;
         position: fixed;
         top: 0;
         right: 0;
@@ -493,12 +494,14 @@ body.js-nav-open .nav-toggle-bar:nth-child(3) {
         }
     }
 
-    .nav-link {
+    html.js .nav .nav-link {
+        display: block;
+        width: 100%;
         padding: 0.9rem 0;
         border-bottom: 1px solid rgba(120, 140, 255, 0.12);
     }
 
-    .nav-link:last-child {
+    html.js .nav .nav-link:last-child {
         border-bottom: none;
     }
 
