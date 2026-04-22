@@ -17,7 +17,8 @@ RUN groupadd --system appuser \
     && sed -i 's/\r$//' /app/entrypoint.sh \
     && chmod +x /app/entrypoint.sh
 
-USER appuser
+# Старт под root: entrypoint.sh выставит права на тома и перейдёт на appuser (см. runuser).
+USER root
 
 EXPOSE 8000
 
