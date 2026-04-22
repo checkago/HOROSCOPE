@@ -3,8 +3,10 @@ set -e
 
 mkdir -p /app/data /app/staticfiles
 
-# Тома Docker часто приходят с владельцем root — без chown migrate не пишет в SQLite.
+# Тома Docker часто с root-владельцем; в static_data после старых деплоев лежат чужие UID —
+# collectstatic не может удалить такие файлы. Под root чистим только staticfiles, затем chown.
 if [ "$(id -u)" = "0" ]; then
+    find /app/staticfiles -mindepth 1 -delete 2>/dev/null || true
     chown -R appuser:appuser /app/data /app/staticfiles
     exec runuser -u appuser -g appuser -- "$0" "$@"
 fi
