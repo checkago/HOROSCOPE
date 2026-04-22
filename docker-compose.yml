@@ -1,3 +1,7 @@
+# Перед первым запуском: cp .env.example .env
+# Прод (Caddy 80/443): docker compose up -d --build
+# Локально без занятия 80/443: docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
+
 services:
   web:
     build:

@@ -10,13 +10,16 @@ venv/
 env/
 .idea/
 .vscode/
+.cursor/
 *.sqlite3
 db.sqlite3
 staticfiles/
 media/
 .git/
-.gitignore
 .env
-docker-compose.yml
-nginx/
-caddy/
+# локальный override compose (см. docker-compose.override.example.yml)
+docker-compose.override.yml
+# артефакты / черновики, не нужны в образе приложения
+*Docke.dockerfile
+основной промт.md
+пример.md

@@ -1,0 +1,12 @@
+# Локальный запуск без Caddy (не занимает 80/443). Сайт: http://localhost:8080
+#
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
+
+services:
+  nginx:
+    ports:
+      - "8080:80"
+
+  caddy:
+    profiles:
+      - disabled

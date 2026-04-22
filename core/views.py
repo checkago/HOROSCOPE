@@ -4,12 +4,15 @@ import json
 import re
 from urllib.parse import urlencode
 
+import markdown
 from django.conf import settings
 from django.http import Http404, HttpRequest, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.safestring import mark_safe
 
 from .article_loader import get_article_from_disk, load_article_stubs_from_disk
 from .models import Article, Profile, Relationship
+from .url_slugs import get_profile_by_public_slug, profile_public_slug
 from .relationship_display import (
     LABEL_BOUND,
     LABEL_INTIMACY,
@@ -45,8 +48,206 @@ def _get_relationship(source_id: str, target_id: str) -> Relationship:
     raise Http404("Связь не найдена")
 
 
+def _get_relationship_flexible(a_id: str, b_id: str) -> Relationship:
+    """Порядок в URL может не совпадать с направлением связи в БД — пробуем оба."""
+    try:
+        return _get_relationship(a_id, b_id)
+    except Http404:
+        return _get_relationship(b_id, a_id)
+
+
+def _redirect_characteristic(request: HttpRequest, profile: Profile):
+    q = urlencode({"mode": "characteristic", "profile": profile_public_slug(profile)})
+    return redirect(f"/?{q}", permanent=True)
+
+
+def _redirect_relationship(request: HttpRequest, relationship: Relationship):
+    q = urlencode(
+        {
+            "mode": "relationship",
+            "source": profile_public_slug(relationship.source),
+            "target": profile_public_slug(relationship.target),
+        }
+    )
+    return redirect(f"/?{q}", permanent=True)
+
+
+def _markdown_to_safe_html(md: str) -> str:
+    html = markdown.markdown(
+        md or "",
+        extensions=["extra", "sane_lists"],
+        output_format="html",
+    )
+    return mark_safe(html)
+
+
+def _relationship_result_markdown(relationship: Relationship) -> str:
+    hi = humanize_relationship_field((relationship.interaction_type or "").strip())
+    hb = humanize_relationship_field((relationship.bound_state or "").strip())
+    content: list[str] = [
+        f"### {relationship.heading}",
+        "",
+        "Сначала — как обычно говорят о паре; затем короткий блок **законов и формул** как подсветка к тому же смыслу; "
+        "ниже — развёрнутый текст модели, если захотите углубиться.",
+        "",
+    ]
+    if (relationship.result_line or "").strip():
+        content.append(f"- **{LABEL_RESULT}:** {relationship.result_line.strip()}")
+    if getattr(relationship, "human_coda", "").strip():
+        content.append(f"- **По-человечески:** {relationship.human_coda.strip()}")
+    content.append("")
+    content.append(f"- **{LABEL_INTERACTION}:** {hi or '—'}")
+    content.append(f"- **{LABEL_BOUND}:** {hb or '—'}")
+    if (relationship.why or "").strip():
+        content.append(f"- **{LABEL_WHY}:** {relationship.why.strip()}")
+    if (relationship.quantum_dynamics or "").strip():
+        content.append(f"- **{LABEL_QUANTUM}:** {relationship.quantum_dynamics.strip()}")
+    if (relationship.intimacy or "").strip():
+        content.append(f"- **{LABEL_INTIMACY}:** {relationship.intimacy.strip()}")
+    if (relationship.synthesis or "").strip():
+        content.append(f"- **{LABEL_SYNTHESIS}:** {relationship.synthesis.strip()}")
+    if (relationship.vulnerabilities or "").strip():
+        content.append(f"- **{LABEL_VULN}:** {relationship.vulnerabilities.strip()}")
+    content.append("")
+    content.append(
+        physics_laws_block(
+            interaction_raw=(relationship.interaction_type or "").strip(),
+            bound_raw=(relationship.bound_state or "").strip(),
+            result_line=(relationship.result_line or "").strip(),
+            human_coda=(getattr(relationship, "human_coda", "") or "").strip(),
+            why=(relationship.why or "").strip(),
+            quantum=(relationship.quantum_dynamics or "").strip(),
+            intimacy=(relationship.intimacy or "").strip(),
+            synthesis=(relationship.synthesis or "").strip(),
+            vulnerabilities=(relationship.vulnerabilities or "").strip(),
+        )
+    )
+    content.extend(
+        [
+            "",
+            _build_state_poetic_block(relationship),
+            "",
+            "#### Расширенная физико-химическая интерпретация",
+            relationship.enriched_text,
+            "",
+            _build_reference_relationship_block(relationship),
+        ]
+    )
+    return "\n".join(content)
+
+
+def _index_characteristic_ssr(request: HttpRequest):
+    pid = (request.GET.get("profile_id") or "").strip()
+    pslug = (request.GET.get("profile") or "").strip()
+    if pid and not pslug:
+        p = Profile.objects.filter(pk=pid).first()
+        if p:
+            return _redirect_characteristic(request, p)
+        return render(request, "core/index.html", {})
+    if not pslug:
+        return render(request, "core/index.html", {})
+    profile = get_profile_by_public_slug(pslug)
+    if profile is None:
+        return render(request, "core/index.html", {})
+    canon = profile_public_slug(profile)
+    if pslug.lower() != canon.lower():
+        return _redirect_characteristic(request, profile)
+    if pid and str(profile.pk) != pid:
+        return _redirect_characteristic(request, profile)
+    md = profile.characteristic_markdown or ""
+    seo = (
+        _seo_payload_for_sign(request, profile)
+        if profile.kind == Profile.KIND_SIGN
+        else _seo_payload_for_cusp(request, profile)
+    )
+    ssr_state = {
+        "skip_initial_result_fetch": True,
+        "mode": "characteristic",
+        "profile_id": str(profile.pk),
+        "profile_slug": profile_public_slug(profile),
+        "title": profile.display_name,
+        "type": "characteristic",
+        "content_markdown": md,
+        "seo": seo,
+    }
+    return render(
+        request,
+        "core/index.html",
+        {
+            "ssr_seo": seo,
+            "ssr_result_title": profile.display_name,
+            "ssr_result_html": _markdown_to_safe_html(md),
+            "ssr_result_type": "characteristic",
+            "ssr_view_class": "characteristic-view",
+            "ssr_state": ssr_state,
+        },
+    )
+
+
+def _index_relationship_ssr(request: HttpRequest):
+    sid = (request.GET.get("source_id") or "").strip()
+    tid = (request.GET.get("target_id") or "").strip()
+    sslug = (request.GET.get("source") or "").strip()
+    tslug = (request.GET.get("target") or "").strip()
+    if sid and tid and not (sslug and tslug):
+        try:
+            rel = _get_relationship_flexible(sid, tid)
+        except Http404:
+            return render(request, "core/index.html", {})
+        return _redirect_relationship(request, rel)
+    if not sslug or not tslug:
+        return render(request, "core/index.html", {})
+    pa = get_profile_by_public_slug(sslug)
+    pb = get_profile_by_public_slug(tslug)
+    if not pa or not pb:
+        return render(request, "core/index.html", {})
+    try:
+        rel = _get_relationship_flexible(str(pa.pk), str(pb.pk))
+    except Http404:
+        return render(request, "core/index.html", {})
+    c_src = profile_public_slug(rel.source)
+    c_tgt = profile_public_slug(rel.target)
+    if sslug.lower() != c_src.lower() or tslug.lower() != c_tgt.lower():
+        return _redirect_relationship(request, rel)
+    if sid and tid and (str(rel.source_id) != sid or str(rel.target_id) != tid):
+        return _redirect_relationship(request, rel)
+    md = _relationship_result_markdown(rel)
+    seo = _seo_payload_for_relationship(request, rel)
+    ssr_state = {
+        "skip_initial_result_fetch": True,
+        "mode": "relationship",
+        "source_id": str(rel.source_id),
+        "target_id": str(rel.target_id),
+        "source_slug": profile_public_slug(rel.source),
+        "target_slug": profile_public_slug(rel.target),
+        "title": f"{rel.source.display_name} -> {rel.target.display_name}",
+        "type": "relationship",
+        "content_markdown": md,
+        "seo": seo,
+    }
+    return render(
+        request,
+        "core/index.html",
+        {
+            "ssr_seo": seo,
+            "ssr_result_title": f"{rel.source.display_name} -> {rel.target.display_name}",
+            "ssr_result_html": _markdown_to_safe_html(md),
+            "ssr_result_type": "relationship",
+            "ssr_view_class": "relationship-view",
+            "ssr_state": ssr_state,
+        },
+    )
+
+
 def index(request: HttpRequest):
-    return render(request, "core/index.html")
+    if request.method != "GET":
+        return render(request, "core/index.html", {})
+    mode = (request.GET.get("mode") or "").strip()
+    if mode == "characteristic":
+        return _index_characteristic_ssr(request)
+    if mode == "relationship":
+        return _index_relationship_ssr(request)
+    return render(request, "core/index.html", {})
 
 
 def about_view(request: HttpRequest):
@@ -89,8 +290,12 @@ def options_api(request: HttpRequest) -> JsonResponse:
     if mode not in ("characteristic", "relationship"):
         return JsonResponse({"error": "Unsupported mode"}, status=400)
     items = [
-        {"id": p.id, "label": p.display_name}
-        for p in Profile.objects.all().only("id", "display_name")
+        {
+            "id": p.id,
+            "label": p.display_name,
+            "slug": profile_public_slug(p),
+        }
+        for p in Profile.objects.all().only("id", "display_name", "source_file")
     ]
     return JsonResponse({"items": items})
 
@@ -105,7 +310,14 @@ def relationship_targets_api(request: HttpRequest) -> JsonResponse:
         .filter(source_id=source_id)
         .order_by("target__code")
     )
-    items = [{"id": rel.target.id, "label": rel.target.display_name} for rel in rels]
+    items = [
+        {
+            "id": rel.target.id,
+            "label": rel.target.display_name,
+            "slug": profile_public_slug(rel.target),
+        }
+        for rel in rels
+    ]
     return JsonResponse({"items": items})
 
 
@@ -177,7 +389,7 @@ def _seo_payload_for_sign(request: HttpRequest, profile: Profile) -> dict:
         f"{profile.name}, зодиак, {gender_ru}, характеристика знака, физика знаков, "
         "совместимость, физико-химическая модель"
     )
-    q = {"mode": "characteristic", "profile_id": str(profile.pk)}
+    q = {"mode": "characteristic", "profile": profile_public_slug(profile)}
     canonical = _absolute_query_url(request, q)
     json_ld = {
         "@context": "https://schema.org",
@@ -195,6 +407,7 @@ def _seo_payload_for_sign(request: HttpRequest, profile: Profile) -> dict:
     return {
         "apply": True,
         "profile_id": profile.pk,
+        "profile_slug": profile_public_slug(profile),
         "title": title,
         "description": desc,
         "keywords": keywords,
@@ -231,7 +444,7 @@ def _seo_payload_for_cusp(request: HttpRequest, profile: Profile) -> dict:
         f"{profile.name}, куспид, {gender_ru}, граница знаков, суперпозиция, "
         "физика знаков, характеристика куспида, совместимость"
     )
-    q = {"mode": "characteristic", "profile_id": str(profile.pk)}
+    q = {"mode": "characteristic", "profile": profile_public_slug(profile)}
     canonical = _absolute_query_url(request, q)
     json_ld = {
         "@context": "https://schema.org",
@@ -249,6 +462,7 @@ def _seo_payload_for_cusp(request: HttpRequest, profile: Profile) -> dict:
     return {
         "apply": True,
         "profile_id": profile.pk,
+        "profile_slug": profile_public_slug(profile),
         "title": title,
         "description": desc,
         "keywords": keywords,
@@ -293,8 +507,8 @@ def _seo_payload_for_relationship(
     )
     q = {
         "mode": "relationship",
-        "source_id": str(src.pk),
-        "target_id": str(tgt.pk),
+        "source": profile_public_slug(src),
+        "target": profile_public_slug(tgt),
     }
     canonical = _absolute_query_url(request, q)
     json_ld = {
@@ -314,6 +528,8 @@ def _seo_payload_for_relationship(
         "apply": True,
         "source_id": src.pk,
         "target_id": tgt.pk,
+        "source_slug": profile_public_slug(src),
+        "target_slug": profile_public_slug(tgt),
         "title": title,
         "description": desc,
         "keywords": keywords,
@@ -438,10 +654,19 @@ def result_api(request: HttpRequest) -> JsonResponse:
     mode = request.GET.get("mode")
 
     if mode == "characteristic":
-        profile_id = request.GET.get("profile_id")
-        if not profile_id:
-            return JsonResponse({"error": "profile_id is required"}, status=400)
-        profile = get_object_or_404(Profile, id=profile_id)
+        profile_slug = (request.GET.get("profile") or "").strip()
+        profile_id = (request.GET.get("profile_id") or "").strip()
+        if not profile_slug and not profile_id:
+            return JsonResponse(
+                {"error": "profile or profile_id is required"},
+                status=400,
+            )
+        if profile_slug:
+            profile = get_profile_by_public_slug(profile_slug)
+            if profile is None:
+                return JsonResponse({"error": "Unknown profile"}, status=404)
+        else:
+            profile = get_object_or_404(Profile, pk=profile_id)
         if profile.kind == Profile.KIND_SIGN:
             seo = _seo_payload_for_sign(request, profile)
         else:
@@ -457,69 +682,39 @@ def result_api(request: HttpRequest) -> JsonResponse:
         )
 
     if mode == "relationship":
-        source_id = request.GET.get("source_id")
-        target_id = request.GET.get("target_id")
-        if not source_id or not target_id:
-            return JsonResponse({"error": "source_id and target_id are required"}, status=400)
-        relationship = _get_relationship(source_id, target_id)
-        seo = _seo_payload_for_relationship(request, relationship)
-        hi = humanize_relationship_field((relationship.interaction_type or "").strip())
-        hb = humanize_relationship_field((relationship.bound_state or "").strip())
-        content = [
-            f"### {relationship.heading}",
-            "",
-            "Сначала — как обычно говорят о паре; затем короткий блок **законов и формул** как подсветка к тому же смыслу; "
-            "ниже — развёрнутый текст модели, если захотите углубиться.",
-            "",
-        ]
-        if (relationship.result_line or "").strip():
-            content.append(f"- **{LABEL_RESULT}:** {relationship.result_line.strip()}")
-        if getattr(relationship, "human_coda", "").strip():
-            content.append(f"- **По-человечески:** {relationship.human_coda.strip()}")
-        content.append("")
-        content.append(f"- **{LABEL_INTERACTION}:** {hi or '—'}")
-        content.append(f"- **{LABEL_BOUND}:** {hb or '—'}")
-        if (relationship.why or "").strip():
-            content.append(f"- **{LABEL_WHY}:** {relationship.why.strip()}")
-        if (relationship.quantum_dynamics or "").strip():
-            content.append(f"- **{LABEL_QUANTUM}:** {relationship.quantum_dynamics.strip()}")
-        if (relationship.intimacy or "").strip():
-            content.append(f"- **{LABEL_INTIMACY}:** {relationship.intimacy.strip()}")
-        if (relationship.synthesis or "").strip():
-            content.append(f"- **{LABEL_SYNTHESIS}:** {relationship.synthesis.strip()}")
-        if (relationship.vulnerabilities or "").strip():
-            content.append(f"- **{LABEL_VULN}:** {relationship.vulnerabilities.strip()}")
-        content.append("")
-        content.append(
-            physics_laws_block(
-                interaction_raw=(relationship.interaction_type or "").strip(),
-                bound_raw=(relationship.bound_state or "").strip(),
-                result_line=(relationship.result_line or "").strip(),
-                human_coda=(getattr(relationship, "human_coda", "") or "").strip(),
-                why=(relationship.why or "").strip(),
-                quantum=(relationship.quantum_dynamics or "").strip(),
-                intimacy=(relationship.intimacy or "").strip(),
-                synthesis=(relationship.synthesis or "").strip(),
-                vulnerabilities=(relationship.vulnerabilities or "").strip(),
+        src_slug = (request.GET.get("source") or "").strip()
+        tgt_slug = (request.GET.get("target") or "").strip()
+        source_id = (request.GET.get("source_id") or "").strip()
+        target_id = (request.GET.get("target_id") or "").strip()
+        if src_slug and tgt_slug:
+            pa = get_profile_by_public_slug(src_slug)
+            pb = get_profile_by_public_slug(tgt_slug)
+            if not pa or not pb:
+                return JsonResponse({"error": "Unknown source or target"}, status=404)
+            try:
+                relationship = _get_relationship_flexible(str(pa.pk), str(pb.pk))
+            except Http404:
+                return JsonResponse({"error": "Relationship not found"}, status=404)
+        elif source_id and target_id:
+            try:
+                relationship = _get_relationship_flexible(source_id, target_id)
+            except Http404:
+                return JsonResponse({"error": "Relationship not found"}, status=404)
+        else:
+            return JsonResponse(
+                {
+                    "error": "source and target (slug) or source_id and target_id are required",
+                },
+                status=400,
             )
-        )
-        content.extend(
-            [
-                "",
-                _build_state_poetic_block(relationship),
-                "",
-                "#### Расширенная физико-химическая интерпретация",
-                relationship.enriched_text,
-                "",
-                _build_reference_relationship_block(relationship),
-            ]
-        )
+        seo = _seo_payload_for_relationship(request, relationship)
+        content_md = _relationship_result_markdown(relationship)
         return JsonResponse(
             {
                 "title": f"{relationship.source.display_name} -> {relationship.target.display_name}",
                 "type": "relationship",
                 "kind": None,
-                "content_markdown": "\n".join(content),
+                "content_markdown": content_md,
                 "seo": seo,
             }
         )

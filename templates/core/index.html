@@ -3,29 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if ssr_seo %}
+    <title>{{ ssr_seo.title }}</title>
+    <meta name="description" content="{{ ssr_seo.description }}">
+    <meta name="keywords" content="{{ ssr_seo.keywords }}">
+    {% else %}
     <title>Физика знаков и куспидов — совместимость и характеристики</title>
     <meta name="description" content="Физико-химическая интерпретация знаков и куспидов: характеристики, совместимость, отношения и расширенный разбор взаимодействий в формате научных аналогий.">
     <meta name="keywords" content="знаки зодиака, куспиды, совместимость, физика отношений, астрология и физика, характеристики знаков, анализ совместимости">
+    {% endif %}
     <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1">
     <meta name="author" content="Horoscope Project">
-    <link rel="canonical" href="/">
+    <link rel="canonical" href="{% if ssr_seo %}{{ ssr_seo.canonical }}{% else %}/{% endif %}">
     <link rel="icon" type="image/png" href="/static/core/favicon.png">
     <link rel="apple-touch-icon" href="/static/core/favicon.png">
 
     <meta property="og:type" content="website">
     <meta property="og:locale" content="ru_RU">
+    {% if ssr_seo %}
+    <meta property="og:title" content="{{ ssr_seo.og_title }}">
+    <meta property="og:description" content="{{ ssr_seo.og_description }}">
+    <meta property="og:url" content="{{ ssr_seo.canonical }}">
+    {% else %}
     <meta property="og:title" content="Физика знаков и куспидов — совместимость и характеристики">
     <meta property="og:description" content="Научно-образная интерпретация отношений и характеристик: физика, химия, математика и удобный интерактивный выбор пар.">
     <meta property="og:url" content="/">
+    {% endif %}
     <meta property="og:site_name" content="Физика знаков и куспидов">
 
     <meta name="twitter:card" content="summary_large_image">
+    {% if ssr_seo %}
+    <meta name="twitter:title" content="{{ ssr_seo.twitter_title }}">
+    <meta name="twitter:description" content="{{ ssr_seo.twitter_description }}">
+    {% else %}
     <meta name="twitter:title" content="Физика знаков и куспидов — совместимость и характеристики">
     <meta name="twitter:description" content="Интерактивный разбор отношений и характеристик знаков/куспидов через физико-химические модели.">
+    {% endif %}
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/core/styles.css">
-    <script type="application/ld+json" id="seo-jsonld">
+    <script type="application/ld+json" id="seo-jsonld">{% if ssr_seo %}{{ ssr_seo.json_ld|safe }}{% else %}
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
@@ -34,6 +51,7 @@
       "description": "Интерактивный сайт с физико-химической интерпретацией характеристик и отношений знаков и куспидов.",
       "url": "/"
     }
+    {% endif %}
     </script>
 </head>
 <body>
@@ -87,12 +105,13 @@
             <button id="show-relationship-btn" type="button" class="btn btn-neon mt-3 w-100">Показать отношения</button>
         </section>
 
-        <section class="glass result-shell p-4 hidden" id="result-card">
-            <h2 id="result-title" class="h4 mb-3"></h2>
-            <article id="result-content" class="result-content"></article>
+        <section class="glass result-shell p-4{% if not ssr_result_html %} hidden{% endif %}" id="result-card">
+            <h2 id="result-title" class="h4 mb-3">{% if ssr_result_title %}{{ ssr_result_title }}{% endif %}</h2>
+            <article id="result-content" class="result-content{% if ssr_view_class %} {{ ssr_view_class }}{% endif %}">{% if ssr_result_html %}{{ ssr_result_html }}{% endif %}</article>
         </section>
     </main>
 
+    {% if ssr_state %}{{ ssr_state|json_script:"ssr-state" }}{% endif %}
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="/static/core/app.js"></script>
 

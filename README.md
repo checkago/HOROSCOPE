@@ -56,29 +56,34 @@ python manage.py runserver 0.0.0.0:8000
 
 ## Docker-деплой (Ubuntu Server)
 
-DNS: для домена **fizikazodiaka.ru** запись типа **A** должна указывать на IP сервера (сейчас в `.env` также разрешён прямой доступ по IP **37.48.251.135** для отладки).
+DNS: для домена **fizikazodiaka.ru** запись типа **A** должна указывать на IP сервера (см. также `DJANGO_ALLOWED_HOSTS` / `DJANGO_CSRF_TRUSTED_ORIGINS` в `.env.example`).
 
 1. Установить Docker и Compose plugin.
-2. В корне репозитория уже есть `.env` (домен и настройки); при необходимости отредактируйте секрет и почту на сервере после `git pull`.
-
-3. Запустить:
+2. Скопировать переменные окружения: `cp .env.example .env` и задать реальный `DJANGO_SECRET_KEY` и при необходимости домен (`SITE_DOMAIN`, `PUBLIC_SITE_URL`). Файл `.env` в git не коммитится.
+3. Запуск в проде (Gunicorn → Nginx → Caddy, порты **80/443**):
 
 ```bash
 docker compose up -d --build
 ```
 
-4. Проверить:
+4. Локально без занятия портов 80/443 (только Nginx на **8080**, без Caddy):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
+```
+
+5. Проверка:
 
 ```bash
 docker compose ps
 docker compose logs -f web
 ```
 
-Сервис будет доступен по `http://<server-ip>/` или по домену через Nginx на порту **80**.
+**HTTPS:** Caddy в основном `docker-compose.yml` получает сертификат Let’s Encrypt для `{$SITE_DOMAIN}` и проксирует на внутренний Nginx. Внутри сети compose Nginx отдаёт статику и проксирует динамику на Gunicorn.
 
-**HTTPS:** в этом `docker-compose` Nginx только проксирует HTTP. Сертификат подключайте снаружи: TLS у провайдера / облачный прокси (например, с терминацией HTTPS перед сервером), либо отдельный reverse-proxy с Let’s Encrypt на хосте перед контейнером.
+При повторных деплоях с уже заполненной БД в volume можно выставить `SKIP_MD_IMPORT=1` в `.env`, чтобы не перезапускать полный импорт MD при каждом старте контейнера (см. `entrypoint.sh`).
 
-Если после `git pull` контейнеры не стартуют: смотрите логи `docker compose logs web` и `docker compose logs nginx`.
+Если контейнеры не стартуют: `docker compose logs web`, `docker compose logs nginx`, `docker compose logs caddy`.
 
 ## Структура проекта
 
@@ -88,7 +93,7 @@ docker compose logs -f web
 - `static/core/` — стили и клиентский JS
 - `nginx/default.conf` — внутренний прокси Nginx (HTTP) к Gunicorn и `/static/`
 - `caddy/Caddyfile` — Caddy: TLS и прокси на Nginx
-- `docker-compose.yml`, `Dockerfile`, `entrypoint.sh` — контейнеризация и запуск
+- `docker-compose.yml`, `docker-compose.local.yml`, `Dockerfile`, `entrypoint.sh`, `.dockerignore` — контейнеризация и запуск
 
 ## GitHub
 

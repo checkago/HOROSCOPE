@@ -81,9 +81,27 @@ function applyDynamicSeo(seo) {
         return;
     }
     const u = new URL(window.location.href);
-    if (seo.profile_id != null) {
+    if (seo.profile_slug || seo.profile_id != null) {
         u.searchParams.set("mode", "characteristic");
-        u.searchParams.set("profile_id", String(seo.profile_id));
+        if (seo.profile_slug) {
+            u.searchParams.set("profile", String(seo.profile_slug));
+            u.searchParams.delete("profile_id");
+        } else {
+            u.searchParams.set("profile_id", String(seo.profile_id));
+        }
+        u.searchParams.delete("source_id");
+        u.searchParams.delete("target_id");
+        u.searchParams.delete("source");
+        u.searchParams.delete("target");
+        window.history.replaceState(null, "", `${u.pathname}?${u.searchParams.toString()}`);
+        return;
+    }
+    if (seo.source_slug && seo.target_slug) {
+        u.searchParams.set("mode", "relationship");
+        u.searchParams.set("source", String(seo.source_slug));
+        u.searchParams.set("target", String(seo.target_slug));
+        u.searchParams.delete("profile_id");
+        u.searchParams.delete("profile");
         u.searchParams.delete("source_id");
         u.searchParams.delete("target_id");
         window.history.replaceState(null, "", `${u.pathname}?${u.searchParams.toString()}`);
@@ -94,6 +112,9 @@ function applyDynamicSeo(seo) {
         u.searchParams.set("source_id", String(seo.source_id));
         u.searchParams.set("target_id", String(seo.target_id));
         u.searchParams.delete("profile_id");
+        u.searchParams.delete("profile");
+        u.searchParams.delete("source");
+        u.searchParams.delete("target");
         window.history.replaceState(null, "", `${u.pathname}?${u.searchParams.toString()}`);
     }
 }
@@ -136,6 +157,7 @@ modeSelect.addEventListener("change", async (e) => {
         data.items.forEach((item) => {
             const opt = document.createElement("option");
             opt.value = item.id;
+            if (item.slug) opt.dataset.slug = item.slug;
             opt.textContent = item.label;
             profileSelect.appendChild(opt);
         });
@@ -146,6 +168,7 @@ modeSelect.addEventListener("change", async (e) => {
     data.items.forEach((item) => {
         const opt = document.createElement("option");
         opt.value = item.id;
+        if (item.slug) opt.dataset.slug = item.slug;
         opt.textContent = item.label;
         sourceSelect.appendChild(opt);
     });
@@ -161,6 +184,7 @@ sourceSelect.addEventListener("change", async () => {
     data.items.forEach((item) => {
         const opt = document.createElement("option");
         opt.value = item.id;
+        if (item.slug) opt.dataset.slug = item.slug;
         opt.textContent = item.label;
         targetSelect.appendChild(opt);
     });
@@ -216,51 +240,102 @@ const showResult = async (url) => {
     resultCard.classList.remove("hidden");
 };
 
+const characteristicResultUrl = () => {
+    const opt = profileSelect.selectedOptions[0];
+    const slug = opt && opt.dataset && opt.dataset.slug;
+    if (slug) {
+        return `/api/result/?mode=characteristic&profile=${encodeURIComponent(slug)}`;
+    }
+    return `/api/result/?mode=characteristic&profile_id=${encodeURIComponent(profileSelect.value)}`;
+};
+
+const relationshipResultUrl = () => {
+    const so = sourceSelect.selectedOptions[0];
+    const to = targetSelect.selectedOptions[0];
+    const ss = so && so.dataset && so.dataset.slug;
+    const ts = to && to.dataset && to.dataset.slug;
+    if (ss && ts) {
+        return `/api/result/?mode=relationship&source=${encodeURIComponent(ss)}&target=${encodeURIComponent(ts)}`;
+    }
+    return `/api/result/?mode=relationship&source_id=${encodeURIComponent(sourceSelect.value)}&target_id=${encodeURIComponent(targetSelect.value)}`;
+};
+
 showCharacteristicBtn.addEventListener("click", async () => {
     if (!profileSelect.value) return;
-    await showResult(`/api/result/?mode=characteristic&profile_id=${profileSelect.value}`);
+    await showResult(characteristicResultUrl());
 });
 
 showRelationshipBtn.addEventListener("click", async () => {
     if (!sourceSelect.value || !targetSelect.value) return;
-    await showResult(`/api/result/?mode=relationship&source_id=${sourceSelect.value}&target_id=${targetSelect.value}`);
+    await showResult(relationshipResultUrl());
 });
+
+const readSsrState = () => {
+    const el = document.getElementById("ssr-state");
+    if (!el || !el.textContent) return null;
+    try {
+        return JSON.parse(el.textContent);
+    } catch {
+        return null;
+    }
+};
 
 document.addEventListener("DOMContentLoaded", async () => {
     const p = new URLSearchParams(window.location.search);
     const mode = p.get("mode");
+    const ssr = readSsrState();
 
     if (mode === "characteristic") {
-        const id = p.get("profile_id");
-        if (!id) return;
+        const want = p.get("profile") || p.get("profile_id");
+        if (!want) return;
         modeSelect.value = "characteristic";
         selectedMode = "characteristic";
         step2Relationship.classList.add("hidden");
-        resultCard.classList.add("hidden");
+        if (!ssr || !ssr.skip_initial_result_fetch) {
+            resultCard.classList.add("hidden");
+        }
         resetSelect(profileSelect, "Выберите профиль");
         const resp = await fetch("/api/options/?mode=characteristic");
         const data = await resp.json();
         data.items.forEach((item) => {
             const opt = document.createElement("option");
             opt.value = item.id;
+            if (item.slug) opt.dataset.slug = item.slug;
             opt.textContent = item.label;
             profileSelect.appendChild(opt);
         });
         step2Characteristic.classList.remove("hidden");
-        profileSelect.value = id;
+        const found = data.items.find(
+            (it) => String(it.id) === want || (it.slug && it.slug === want)
+        );
+        if (!found) return;
+        profileSelect.value = String(found.id);
         if (!profileSelect.value) return;
-        await showResult(`/api/result/?mode=characteristic&profile_id=${encodeURIComponent(id)}`);
+        if (ssr && ssr.skip_initial_result_fetch && ssr.mode === "characteristic") {
+            if (ssr.seo) applyDynamicSeo(ssr.seo);
+            resultTitle.textContent = ssr.title || "";
+            resultContent.classList.remove("relationship-view");
+            resultContent.classList.add("characteristic-view");
+            return;
+        }
+        const isNumeric = /^\d+$/.test(String(want));
+        const url = isNumeric
+            ? `/api/result/?mode=characteristic&profile_id=${encodeURIComponent(want)}`
+            : `/api/result/?mode=characteristic&profile=${encodeURIComponent(want)}`;
+        await showResult(url);
         return;
     }
 
     if (mode === "relationship") {
-        const sid = p.get("source_id");
-        const tid = p.get("target_id");
+        const sid = p.get("source") || p.get("source_id");
+        const tid = p.get("target") || p.get("target_id");
         if (!sid || !tid) return;
         modeSelect.value = "relationship";
         selectedMode = "relationship";
         step2Characteristic.classList.add("hidden");
-        resultCard.classList.add("hidden");
+        if (!ssr || !ssr.skip_initial_result_fetch) {
+            resultCard.classList.add("hidden");
+        }
         resetSelect(sourceSelect, "Выберите первый профиль");
         resetSelect(targetSelect, "Выберите второй профиль");
         const resp = await fetch("/api/options/?mode=relationship");
@@ -268,24 +343,46 @@ document.addEventListener("DOMContentLoaded", async () => {
         data.items.forEach((item) => {
             const opt = document.createElement("option");
             opt.value = item.id;
+            if (item.slug) opt.dataset.slug = item.slug;
             opt.textContent = item.label;
             sourceSelect.appendChild(opt);
         });
         step2Relationship.classList.remove("hidden");
-        sourceSelect.value = sid;
+        const srcFound = data.items.find(
+            (it) => String(it.id) === sid || (it.slug && it.slug === sid)
+        );
+        if (!srcFound) return;
+        sourceSelect.value = String(srcFound.id);
         if (!sourceSelect.value) return;
-        const rt = await fetch(`/api/relationship-targets/?source_id=${encodeURIComponent(sid)}`);
+        const rt = await fetch(`/api/relationship-targets/?source_id=${encodeURIComponent(sourceSelect.value)}`);
         const targets = await rt.json();
         targets.items.forEach((item) => {
             const opt = document.createElement("option");
             opt.value = item.id;
+            if (item.slug) opt.dataset.slug = item.slug;
             opt.textContent = item.label;
             targetSelect.appendChild(opt);
         });
-        targetSelect.value = tid;
-        if (!targetSelect.value) return;
-        await showResult(
-            `/api/result/?mode=relationship&source_id=${encodeURIComponent(sid)}&target_id=${encodeURIComponent(tid)}`
+        const tgtFound = targets.items.find(
+            (it) => String(it.id) === tid || (it.slug && it.slug === tid)
         );
+        if (!tgtFound) return;
+        targetSelect.value = String(tgtFound.id);
+        if (!targetSelect.value) return;
+        if (ssr && ssr.skip_initial_result_fetch && ssr.mode === "relationship") {
+            if (ssr.seo) applyDynamicSeo(ssr.seo);
+            resultTitle.textContent = ssr.title || "";
+            resultContent.classList.remove("characteristic-view");
+            resultContent.classList.add("relationship-view");
+            stylizeRelationshipMarkup();
+            return;
+        }
+        const sidNum = /^\d+$/.test(String(sid));
+        const tidNum = /^\d+$/.test(String(tid));
+        const url =
+            sidNum && tidNum
+                ? `/api/result/?mode=relationship&source_id=${encodeURIComponent(sid)}&target_id=${encodeURIComponent(tid)}`
+                : `/api/result/?mode=relationship&source=${encodeURIComponent(sid)}&target=${encodeURIComponent(tid)}`;
+        await showResult(url);
     }
 });
