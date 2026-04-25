@@ -1,3 +1,4 @@
 django==5.0.7
 gunicorn==22.0.0
 markdown==3.7
+pillow==12.2.0
