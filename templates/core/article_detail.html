@@ -34,6 +34,26 @@
     <main class="container py-5">
         <div class="glass p-4 p-md-5">
             <p class="article-nav"><a href="{% url 'article_list' %}">← Все статьи</a></p>
+            
+            <!-- 16:9 hero image per article topic (with fallback) -->
+            <div class="article-hero">
+                <picture>
+                    <source
+                        media="(max-width: 767px)"
+                        type="image/webp"
+                        srcset="/static/core/images/articles/{{ article.slug }}-mobile.webp">
+                    <source
+                        media="(min-width: 768px)"
+                        type="image/webp"
+                        srcset="/static/core/images/articles/{{ article.slug }}-desktop.webp">
+                    <img src="/static/core/images/articles/{{ article.slug }}.jpg"
+                         onerror="this.src='/static/core/images/article-hero.jpg'; this.onerror=null;"
+                         alt="{{ article.title }}"
+                         class="article-hero-image"
+                         loading="lazy">
+                </picture>
+            </div>
+            
             <article id="article-html" class="result-content characteristic-view article-reading"></article>
         </div>
     </main>

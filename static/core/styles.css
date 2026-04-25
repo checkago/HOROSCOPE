@@ -1,3 +1,8 @@
+html {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
 body {
     margin: 0;
     background: #0a0b14;
@@ -6,6 +11,8 @@ body {
     font-family: "Inter", system-ui, -apple-system, sans-serif;
     position: relative;
     overflow-x: hidden;
+    max-width: 100%;
+    overflow-wrap: break-word;
 }
 
 /* Deep space background with subtle stars */
@@ -77,15 +84,22 @@ main.container {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.75rem;
+    min-width: 0;
 }
 
 .logo {
     display: flex;
     align-items: center;
     gap: 14px;
+    min-width: 0;
     color: white;
     text-decoration: none;
     font-weight: 700;
+}
+
+.logo > div {
+    min-width: 0;
 }
 
 .logo-img {
@@ -258,6 +272,26 @@ body.js-nav-open .nav-toggle-bar:nth-child(3) {
     font-weight: 420;
 }
 
+.home-hero-media {
+    margin: 1.6rem auto 0;
+    max-width: 860px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(140, 170, 255, 0.2);
+    box-shadow: 0 20px 40px -14px rgba(0, 0, 0, 0.55);
+}
+
+.home-hero-media picture {
+    display: block;
+}
+
+.home-hero-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+}
+
 .step-card,
 .result-shell {
     transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
@@ -339,6 +373,8 @@ body.js-nav-open .nav-toggle-bar:nth-child(3) {
     color: #e0e9ff;
     line-height: 1.85;
     font-size: 1.06rem;
+    overflow-x: hidden;
+    min-width: 0;
 }
 
 #result-title {
@@ -370,6 +406,7 @@ body.js-nav-open .nav-toggle-bar:nth-child(3) {
 
 .result-content h3,
 .result-content h4 {
+    position: relative;
     margin-top: 1.1rem;
     margin-bottom: 0.8rem;
     line-height: 1.35;
@@ -522,6 +559,11 @@ body.js-nav-open .nav-toggle-bar:nth-child(3) {
     .hero-subtitle {
         font-size: 1.05rem;
     }
+
+    .home-hero-media {
+        margin-top: 1.25rem;
+        border-radius: 16px;
+    }
     
     main.container {
         padding-left: 1rem;
@@ -544,15 +586,19 @@ body.js-nav-open .nav-toggle-bar:nth-child(3) {
     }
 }
 
-/* Better long content readability */
-.result-content h3, .result-content h4 {
-    position: relative;
+/* Маркер h3 внутри блока — без отрицательного left (иначе растёт scrollWidth на мобильных) */
+.result-content h3 {
+    padding-left: 1rem;
+}
+
+.result-content.article-reading h3 {
+    padding-left: 0;
 }
 
 .result-content h3::before {
     content: '';
     position: absolute;
-    left: -18px;
+    left: 0;
     top: 8px;
     width: 6px;
     height: 6px;
@@ -633,11 +679,72 @@ body.js-nav-open .nav-toggle-bar:nth-child(3) {
     margin-bottom: 0.35rem;
 }
 
+.article-reading pre {
+    overflow-x: auto;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
 .article-reading hr {
     margin: 1.15rem 0;
     border: 0;
     border-top: 1px solid rgba(120, 140, 255, 0.22);
     opacity: 1;
+}
+
+/* Article hero image — 16:9 aspect ratio, individual per article topic, premium cosmic style.
+   Optimized for both desktop (large hero) and mobile (compact, no horizontal scroll) */
+.article-hero {
+    position: relative;
+    margin: 0 -1rem 2rem;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 
+        0 20px 45px -12px rgba(0, 0, 0, 0.6),
+        0 4px 12px -2px rgba(140, 170, 255, 0.15);
+}
+
+@media (min-width: 768px) {
+    .article-hero {
+        margin: 0 0 2.25rem;
+        border-radius: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .article-hero {
+        margin: 0 -0.75rem 1.75rem;
+        border-radius: 18px;
+    }
+}
+
+.article-hero picture {
+    display: block;
+}
+
+.article-hero-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.article-hero:hover .article-hero-image {
+    transform: scale(1.02);
+}
+
+.article-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        transparent 65%,
+        rgba(10, 11, 20, 0.85) 92%
+    );
+    pointer-events: none;
+    border-radius: 24px;
 }
 
 @media (max-width: 576px) {
