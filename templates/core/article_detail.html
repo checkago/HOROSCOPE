@@ -24,7 +24,7 @@
         .article-nav a:hover { text-decoration: underline; }
     </style>
 </head>
-<body>
+<body class="article-page">
     {% include "core/includes/site_header.html" with nav_active="articles" %}
 
     <div class="bg-orb orb-1"></div>
@@ -54,20 +54,31 @@
                 </picture>
             </div>
             
-            <article id="article-html" class="result-content characteristic-view article-reading"></article>
+            <article id="article-html" class="result-content characteristic-view article-reading">{{ article_html }}</article>
         </div>
     </main>
+    <button type="button" id="back-to-top" class="back-to-top" aria-label="Наверх">↑</button>
 
-    {{ article.body_markdown|json_script:"article-md-json" }}
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
     (function () {
-        var el = document.getElementById("article-md-json");
-        if (!el || typeof marked === "undefined") return;
-        var raw = el.textContent || "";
-        var md;
-        try { md = JSON.parse(raw); } catch (e) { return; }
-        document.getElementById("article-html").innerHTML = marked.parse(md);
+        var btn = document.getElementById("back-to-top");
+        if (!btn) return;
+
+        var threshold = 520;
+        var toggleBtn = function () {
+            if (window.scrollY > threshold) {
+                btn.classList.add("is-visible");
+            } else {
+                btn.classList.remove("is-visible");
+            }
+        };
+
+        window.addEventListener("scroll", toggleBtn, { passive: true });
+        toggleBtn();
+
+        btn.addEventListener("click", function () {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        });
     })();
     </script>
 </body>

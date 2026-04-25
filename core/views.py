@@ -280,6 +280,7 @@ def article_detail(request: HttpRequest, slug: str):
         "core/article_detail.html",
         {
             "article": article,
+            "article_html": _markdown_to_safe_html(article.body_markdown or ""),
             "canonical_url": canonical_url,
         },
     )

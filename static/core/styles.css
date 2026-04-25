@@ -586,6 +586,21 @@ body.js-nav-open .nav-toggle-bar:nth-child(3) {
     }
 }
 
+/* Mobile Chromium stability on long article pages:
+   reduce GPU-heavy fixed/blur layers that can cause flicker */
+@media (max-width: 768px) {
+    body.article-page::before,
+    body.article-page .bg-orb {
+        display: none;
+    }
+
+    body.article-page .glass {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: rgba(15, 20, 42, 0.9);
+    }
+}
+
 /* Маркер h3 внутри блока — без отрицательного left (иначе растёт scrollWidth на мобильных) */
 .result-content h3 {
     padding-left: 1rem;
@@ -747,11 +762,50 @@ body.js-nav-open .nav-toggle-bar:nth-child(3) {
     border-radius: 24px;
 }
 
+.back-to-top {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    width: 46px;
+    height: 46px;
+    border: 1px solid rgba(150, 175, 255, 0.42);
+    border-radius: 999px;
+    background: rgba(15, 20, 42, 0.88);
+    color: #eef2ff;
+    font-size: 1.2rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: opacity 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
+    z-index: 250;
+}
+
+.back-to-top:hover {
+    border-color: rgba(180, 200, 255, 0.65);
+}
+
+.back-to-top.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
 @media (max-width: 576px) {
     .article-reading {
         font-size: 1rem;
     }
     .article-reading h1 {
         font-size: 1.28rem;
+    }
+
+    .back-to-top {
+        right: 0.8rem;
+        bottom: 0.8rem;
     }
 }
