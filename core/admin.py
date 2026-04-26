@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Article, Profile, Relationship
+from .models import Article, DailyForecast, Profile, Relationship
 
 
 @admin.register(Profile)
@@ -23,3 +23,11 @@ class RelationshipAdmin(admin.ModelAdmin):
     list_display = ("source", "target")
     list_select_related = ("source", "target")
     search_fields = ("source__display_name", "target__display_name", "heading")
+
+
+@admin.register(DailyForecast)
+class DailyForecastAdmin(admin.ModelAdmin):
+    list_display = ("forecast_date", "profile", "generated_at")
+    list_filter = ("forecast_date", "profile__kind")
+    list_select_related = ("profile",)
+    search_fields = ("profile__display_name", "content_markdown")

@@ -122,11 +122,14 @@ function applyDynamicSeo(seo) {
 const modeSelect = document.getElementById("mode-select");
 const step2Characteristic = document.getElementById("step-2-characteristic");
 const step2Relationship = document.getElementById("step-2-relationship");
+const step2Daily = document.getElementById("step-2-daily");
 const profileSelect = document.getElementById("profile-select");
 const sourceSelect = document.getElementById("source-select");
 const targetSelect = document.getElementById("target-select");
+const dailyProfileSelect = document.getElementById("daily-profile-select");
 const showCharacteristicBtn = document.getElementById("show-characteristic-btn");
 const showRelationshipBtn = document.getElementById("show-relationship-btn");
+const showDailyBtn = document.getElementById("show-daily-btn");
 const resultCard = document.getElementById("result-card");
 const resultTitle = document.getElementById("result-title");
 const resultContent = document.getElementById("result-content");
@@ -144,24 +147,31 @@ modeSelect.addEventListener("change", async (e) => {
     resetSelect(profileSelect, "Выберите профиль");
     resetSelect(sourceSelect, "Выберите первый профиль");
     resetSelect(targetSelect, "Сначала выберите профиль 1");
+    resetSelect(dailyProfileSelect, "Выберите профиль");
 
     step2Characteristic.classList.add("hidden");
     step2Relationship.classList.add("hidden");
+    step2Daily.classList.add("hidden");
 
     if (!selectedMode) return;
 
     const resp = await fetch(`/api/options/?mode=${selectedMode}`);
     const data = await resp.json();
 
-    if (selectedMode === "characteristic") {
+    if (selectedMode === "characteristic" || selectedMode === "daily") {
+        const targetSelectEl = selectedMode === "daily" ? dailyProfileSelect : profileSelect;
         data.items.forEach((item) => {
             const opt = document.createElement("option");
             opt.value = item.id;
             if (item.slug) opt.dataset.slug = item.slug;
             opt.textContent = item.label;
-            profileSelect.appendChild(opt);
+            targetSelectEl.appendChild(opt);
         });
-        step2Characteristic.classList.remove("hidden");
+        if (selectedMode === "daily") {
+            step2Daily.classList.remove("hidden");
+        } else {
+            step2Characteristic.classList.remove("hidden");
+        }
         return;
     }
 
@@ -260,6 +270,15 @@ const relationshipResultUrl = () => {
     return `/api/result/?mode=relationship&source_id=${encodeURIComponent(sourceSelect.value)}&target_id=${encodeURIComponent(targetSelect.value)}`;
 };
 
+const dailyResultUrl = () => {
+    const opt = dailyProfileSelect.selectedOptions[0];
+    const slug = opt && opt.dataset && opt.dataset.slug;
+    if (slug) {
+        return `/api/result/?mode=daily&profile=${encodeURIComponent(slug)}`;
+    }
+    return `/api/result/?mode=daily&profile_id=${encodeURIComponent(dailyProfileSelect.value)}`;
+};
+
 showCharacteristicBtn.addEventListener("click", async () => {
     if (!profileSelect.value) return;
     await showResult(characteristicResultUrl());
@@ -268,6 +287,11 @@ showCharacteristicBtn.addEventListener("click", async () => {
 showRelationshipBtn.addEventListener("click", async () => {
     if (!sourceSelect.value || !targetSelect.value) return;
     await showResult(relationshipResultUrl());
+});
+
+showDailyBtn.addEventListener("click", async () => {
+    if (!dailyProfileSelect.value) return;
+    await showResult(dailyResultUrl());
 });
 
 const readSsrState = () => {
@@ -383,6 +407,41 @@ document.addEventListener("DOMContentLoaded", async () => {
             sidNum && tidNum
                 ? `/api/result/?mode=relationship&source_id=${encodeURIComponent(sid)}&target_id=${encodeURIComponent(tid)}`
                 : `/api/result/?mode=relationship&source=${encodeURIComponent(sid)}&target=${encodeURIComponent(tid)}`;
+        await showResult(url);
+        return;
+    }
+
+    if (mode === "daily") {
+        const want = p.get("profile") || p.get("profile_id");
+        if (!want) return;
+        modeSelect.value = "daily";
+        selectedMode = "daily";
+        step2Characteristic.classList.add("hidden");
+        step2Relationship.classList.add("hidden");
+        if (!ssr || !ssr.skip_initial_result_fetch) {
+            resultCard.classList.add("hidden");
+        }
+        resetSelect(dailyProfileSelect, "Выберите профиль");
+        const resp = await fetch("/api/options/?mode=daily");
+        const data = await resp.json();
+        data.items.forEach((item) => {
+            const opt = document.createElement("option");
+            opt.value = item.id;
+            if (item.slug) opt.dataset.slug = item.slug;
+            opt.textContent = item.label;
+            dailyProfileSelect.appendChild(opt);
+        });
+        step2Daily.classList.remove("hidden");
+        const found = data.items.find(
+            (it) => String(it.id) === want || (it.slug && it.slug === want)
+        );
+        if (!found) return;
+        dailyProfileSelect.value = String(found.id);
+        if (!dailyProfileSelect.value) return;
+        const isNumeric = /^\d+$/.test(String(want));
+        const url = isNumeric
+            ? `/api/result/?mode=daily&profile_id=${encodeURIComponent(want)}`
+            : `/api/result/?mode=daily&profile=${encodeURIComponent(want)}`;
         await showResult(url);
     }
 });

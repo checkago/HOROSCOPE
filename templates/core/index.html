@@ -86,6 +86,7 @@
                 <option value="">Выберите режим</option>
                 <option value="characteristic">Характеристика знака/куспида</option>
                 <option value="relationship">Отношения между знаками/куспидами</option>
+                <option value="daily">Ежедневный прогноз (физическая модель)</option>
             </select>
         </section>
 
@@ -115,6 +116,15 @@
                 </div>
             </div>
             <button id="show-relationship-btn" type="button" class="btn btn-neon mt-3 w-100">Показать отношения</button>
+        </section>
+
+        <section class="glass step-card p-4 mb-4 hidden" id="step-2-daily">
+            <h2 class="section-title">Шаг 2. Выберите профиль</h2>
+            <label class="form-label" for="daily-profile-select">Знак или куспид</label>
+            <select id="daily-profile-select" class="form-select form-select-lg">
+                <option value="">Выберите профиль</option>
+            </select>
+            <button id="show-daily-btn" type="button" class="btn btn-neon mt-3 w-100">Показать прогноз на сегодня</button>
         </section>
 
         <section class="glass result-shell p-4{% if not ssr_result_html %} hidden{% endif %}" id="result-card">

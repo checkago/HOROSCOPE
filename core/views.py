@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime
 from urllib.parse import urlencode
 
 import markdown
@@ -11,6 +12,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.safestring import mark_safe
 
 from .article_loader import get_article_from_disk, load_article_stubs_from_disk
+from .daily_forecast import ensure_daily_forecast
 from .models import Article, Profile, Relationship
 from .url_slugs import get_profile_by_public_slug, profile_public_slug
 from .relationship_display import (
@@ -288,7 +290,7 @@ def article_detail(request: HttpRequest, slug: str):
 
 def options_api(request: HttpRequest) -> JsonResponse:
     mode = request.GET.get("mode")
-    if mode not in ("characteristic", "relationship"):
+    if mode not in ("characteristic", "relationship", "daily"):
         return JsonResponse({"error": "Unsupported mode"}, status=400)
     items = [
         {
@@ -717,6 +719,40 @@ def result_api(request: HttpRequest) -> JsonResponse:
                 "kind": None,
                 "content_markdown": content_md,
                 "seo": seo,
+            }
+        )
+
+    if mode == "daily":
+        profile_slug = (request.GET.get("profile") or "").strip()
+        profile_id = (request.GET.get("profile_id") or "").strip()
+        raw_date = (request.GET.get("date") or "").strip()
+
+        if not profile_slug and not profile_id:
+            return JsonResponse({"error": "profile or profile_id is required"}, status=400)
+
+        if raw_date:
+            try:
+                target_date = datetime.strptime(raw_date, "%Y-%m-%d").date()
+            except ValueError:
+                return JsonResponse({"error": "date must be YYYY-MM-DD"}, status=400)
+        else:
+            target_date = datetime.now().date()
+
+        if profile_slug:
+            profile = get_profile_by_public_slug(profile_slug)
+            if profile is None:
+                return JsonResponse({"error": "Unknown profile"}, status=404)
+        else:
+            profile = get_object_or_404(Profile, pk=profile_id)
+
+        daily = ensure_daily_forecast(profile, target_date)
+        return JsonResponse(
+            {
+                "title": f"Ежедневный прогноз · {profile.display_name}",
+                "type": "daily",
+                "kind": profile.kind,
+                "content_markdown": daily.content_markdown,
+                "seo": {"apply": False},
             }
         )
 

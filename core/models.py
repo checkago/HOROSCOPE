@@ -69,3 +69,19 @@ class Article(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+
+class DailyForecast(models.Model):
+    """Ежедневный прогноз в стиле физической модели для профиля."""
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="daily_forecasts")
+    forecast_date = models.DateField(db_index=True)
+    content_markdown = models.TextField()
+    generated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-forecast_date", "profile__code")
+        unique_together = ("profile", "forecast_date")
+
+    def __str__(self) -> str:
+        return f"{self.profile.display_name} · {self.forecast_date}"

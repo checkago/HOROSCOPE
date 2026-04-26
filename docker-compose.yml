@@ -19,6 +19,23 @@ services:
       - static_data:/app/staticfiles
     restart: unless-stopped
 
+  forecast_scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: horoscope_forecast_scheduler
+    env_file:
+      - .env
+    environment:
+      DJANGO_SQLITE_PATH: /app/data/db.sqlite3
+    entrypoint: ["python", "manage.py", "run_daily_forecast_scheduler"]
+    user: "appuser"
+    volumes:
+      - db_data:/app/data
+    restart: unless-stopped
+    depends_on:
+      - web
+
   nginx:
     image: nginx:1.27-alpine
     container_name: horoscope_nginx
