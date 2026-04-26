@@ -438,10 +438,21 @@ def build_daily_markdown(
     social_line = _pick(SOCIAL_COMMENTS, f"{key}:social:{sig}", social_tier)
     risk_line = _pick(RISK_COMMENTS, f"{key}:risk:{sig}", overload_tier)
     practice_line = _pick(PRACTICE_COMMENTS, f"{key}:practice:{sig}", resilience_tier)
-    human_line = _pick(
+    human_core = _pick(
         HUMAN_CODA,
         f"{key}:human:{sig}",
         _tier((resilience_score + social_score) // 2),
+    )
+    if focus_score >= social_score + 8:
+        human_vector = "один длинный фокус-блок и мягкая добивка вечером"
+    elif social_score >= focus_score + 8:
+        human_vector = "короткие контакты с фиксацией договоренностей сразу после диалога"
+    else:
+        human_vector = "баланс коротких рабочих блоков и чистой коммуникации без форсажа"
+    human_line = (
+        f"{human_core} Для вашей связки «{particle}/{spin}/{charge}» "
+        f"лучший вектор сегодня: {human_vector} "
+        f"(фокус {focus_score}, социальный канал {social_score}, риск {overload_risk})."
     )
     energy_detail = _axis_phrase("energy", resilience_score, f"{key}:energy_detail:{sig}")
     focus_detail = _axis_phrase("focus", focus_score, f"{key}:focus_detail:{sig}")
