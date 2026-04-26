@@ -139,8 +139,8 @@ let selectedMode = "";
 
 const updateBackToTopMainVisibility = () => {
     if (!backToTopMainBtn || !resultCard || !resultContent) return;
-    const hasLongResult = (resultContent.textContent || "").trim().length > 700;
-    const canShow = !resultCard.classList.contains("hidden") && hasLongResult && window.scrollY > 420;
+    const hasLongResult = (resultContent.textContent || "").trim().length > 550;
+    const canShow = !resultCard.classList.contains("hidden") && hasLongResult;
     backToTopMainBtn.classList.toggle("is-visible", canShow);
 };
 
