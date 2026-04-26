@@ -110,6 +110,7 @@ def _profile_signature(profile: Profile) -> str:
 
 def build_daily_markdown(profile: Profile, forecast_date: date) -> str:
     key = f"{profile.code}:{forecast_date.isoformat()}"
+    is_weekend = forecast_date.weekday() >= 5
     particle = _extract_field(profile.characteristic_markdown, "- **Частица:**") or "не указан"
     spin = _extract_field(profile.characteristic_markdown, "- **Спин:**") or "не указан"
     charge = _extract_field(profile.characteristic_markdown, "- **Заряд:**") or "не указан"
@@ -128,6 +129,14 @@ def build_daily_markdown(profile: Profile, forecast_date: date) -> str:
     social_score = _to_score(base_social, wave_social, _hash_unit(f"{key}:social_noise"))
     resilience_score = _to_score(base_resilience, wave_resilience, _hash_unit(f"{key}:res_noise"))
     impulse_score = _to_score(base_impulse, wave_impulse, _hash_unit(f"{key}:impulse_noise"))
+
+    # В выходные чаще выше социальная динамика и восстановление, но ниже рабочая фокусировка.
+    if is_weekend:
+        focus_score = max(0, focus_score - 10)
+        social_score = min(100, social_score + 8)
+        resilience_score = min(100, resilience_score + 6)
+        impulse_score = max(0, impulse_score - 3)
+
     overload_risk = max(0, min(100, int(round((impulse_score * 0.7 + (100 - resilience_score) * 0.6) / 1.3))))
 
     focus_tier = _tier(focus_score)
@@ -155,6 +164,10 @@ def build_daily_markdown(profile: Profile, forecast_date: date) -> str:
         else "Социальный канал сегодня значимее индивидуального рывка: "
              "лучше встраивать решения в диалог, а не в одиночный импульс."
     )
+    if is_weekend:
+        timing_hint = (
+            "Режим выходного дня: ключевая отдача чаще в восстановлении, близких контактах и мягкой синхронизации планов."
+        )
 
     # Верифицируемые гипотезы дня (чтобы в конце дня можно было сверить, без Барнума-расплывчатости).
     check_1 = (
@@ -172,6 +185,13 @@ def build_daily_markdown(profile: Profile, forecast_date: date) -> str:
         if overload_risk >= 50
         else "После 18:00 можно делать лёгкую добивку задач, но без входа в новые сложные темы."
     )
+    if is_weekend:
+        check_1 = (
+            "Если вы оставите не больше 1 обязательной задачи, день даст больше ресурса, чем при попытке «догнать неделю»."
+        )
+        check_3 = (
+            "К вечеру лучше сработает восстановление (прогулка/тихий контакт), чем попытка резко повышать продуктивность."
+        )
 
     return "\n".join(
         [
@@ -187,6 +207,7 @@ def build_daily_markdown(profile: Profile, forecast_date: date) -> str:
             "",
             "#### Интерпретация по вашей физической модели",
             "",
+            f"- **Календарный режим:** {'выходной (суббота/воскресенье)' if is_weekend else 'будний'}",
             f"- **Фон поля:** {energy_line}",
             f"- **Когнитивный режим:** {focus_line}",
             f"- **Социальная динамика:** {social_line}",
@@ -223,6 +244,16 @@ def build_daily_markdown(profile: Profile, forecast_date: date) -> str:
 
 
 def _build_llm_prompt(profile: Profile, forecast_date: date) -> str:
+    weekday_ru = (
+        "понедельник",
+        "вторник",
+        "среда",
+        "четверг",
+        "пятница",
+        "суббота",
+        "воскресенье",
+    )[forecast_date.weekday()]
+    weekend_note = "да" if forecast_date.weekday() >= 5 else "нет"
     particle = _extract_field(profile.characteristic_markdown, "- **Частица:**") or "не указан"
     spin = _extract_field(profile.characteristic_markdown, "- **Спин:**") or "не указан"
     charge = _extract_field(profile.characteristic_markdown, "- **Заряд:**") or "не указан"
@@ -233,6 +264,8 @@ def _build_llm_prompt(profile: Profile, forecast_date: date) -> str:
         "«физика знаков и куспидов», без мистики и без эффекта Барнума.\n\n"
         f"Профиль: {profile.display_name}\n"
         f"Дата: {forecast_date.isoformat()}\n"
+        f"День недели: {weekday_ru}\n"
+        f"Выходной (сб/вс): {weekend_note}\n"
         f"Тип: {profile.kind}\n"
         f"Частица: {particle}\n"
         f"Спин: {spin}\n"
@@ -250,6 +283,8 @@ def _build_llm_prompt(profile: Profile, forecast_date: date) -> str:
         "   - #### Гипотезы дня для вечерней сверки (3 пункта)\n"
         "   - #### Протокол сверки в конце дня (2 минуты)\n"
         "3) Прогноз должен быть уникален для этого профиля и этой даты.\n"
+        "3.1) Учитывай день недели: в субботу/воскресенье смещай акцент в восстановление и социальный контур, "
+        "а не в рабочий форсаж.\n"
         "4) Избегай универсальных фраз типа «прислушайтесь к себе» без конкретики.\n"
         "5) Дай конкретные проверяемые гипотезы, чтобы читатель мог сверить вечером.\n"
         "6) Объём: 1800-2600 символов.\n"
