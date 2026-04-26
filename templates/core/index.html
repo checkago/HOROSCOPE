@@ -132,6 +132,7 @@
             <article id="result-content" class="result-content{% if ssr_view_class %} {{ ssr_view_class }}{% endif %}">{% if ssr_result_html %}{{ ssr_result_html }}{% endif %}</article>
         </section>
     </main>
+    <button type="button" id="back-to-top-main" class="back-to-top" aria-label="Наверх">↑</button>
 
     {% if ssr_state %}{{ ssr_state|json_script:"ssr-state" }}{% endif %}
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>

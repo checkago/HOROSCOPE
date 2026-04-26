@@ -133,8 +133,16 @@ const showDailyBtn = document.getElementById("show-daily-btn");
 const resultCard = document.getElementById("result-card");
 const resultTitle = document.getElementById("result-title");
 const resultContent = document.getElementById("result-content");
+const backToTopMainBtn = document.getElementById("back-to-top-main");
 
 let selectedMode = "";
+
+const updateBackToTopMainVisibility = () => {
+    if (!backToTopMainBtn || !resultCard || !resultContent) return;
+    const hasLongResult = (resultContent.textContent || "").trim().length > 700;
+    const canShow = !resultCard.classList.contains("hidden") && hasLongResult && window.scrollY > 420;
+    backToTopMainBtn.classList.toggle("is-visible", canShow);
+};
 
 const resetSelect = (el, text) => {
     el.innerHTML = `<option value="">${text}</option>`;
@@ -144,6 +152,7 @@ modeSelect.addEventListener("change", async (e) => {
     selectedMode = e.target.value;
     resetSeoToDefaults();
     resultCard.classList.add("hidden");
+    updateBackToTopMainVisibility();
     resetSelect(profileSelect, "Выберите профиль");
     resetSelect(sourceSelect, "Выберите первый профиль");
     resetSelect(targetSelect, "Сначала выберите профиль 1");
@@ -248,6 +257,7 @@ const showResult = async (url) => {
         stylizeRelationshipMarkup();
     }
     resultCard.classList.remove("hidden");
+    updateBackToTopMainVisibility();
 };
 
 const characteristicResultUrl = () => {
@@ -305,6 +315,13 @@ const readSsrState = () => {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
+    if (backToTopMainBtn) {
+        backToTopMainBtn.addEventListener("click", () => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+        window.addEventListener("scroll", updateBackToTopMainVisibility, { passive: true });
+    }
+
     const p = new URLSearchParams(window.location.search);
     const mode = p.get("mode");
     const ssr = readSsrState();
@@ -340,6 +357,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             resultTitle.textContent = ssr.title || "";
             resultContent.classList.remove("relationship-view");
             resultContent.classList.add("characteristic-view");
+            updateBackToTopMainVisibility();
             return;
         }
         const isNumeric = /^\d+$/.test(String(want));
@@ -399,6 +417,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             resultContent.classList.remove("characteristic-view");
             resultContent.classList.add("relationship-view");
             stylizeRelationshipMarkup();
+            updateBackToTopMainVisibility();
             return;
         }
         const sidNum = /^\d+$/.test(String(sid));
@@ -444,4 +463,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             : `/api/result/?mode=daily&profile=${encodeURIComponent(want)}`;
         await showResult(url);
     }
+
+    updateBackToTopMainVisibility();
 });
